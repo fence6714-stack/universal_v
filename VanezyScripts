@@ -14,26 +14,12 @@ getgenv().FOVSize = 150
 getgenv().AimPart = "Head"
 getgenv().MaxDistance = 1000
 getgenv().AntiAFK = false
-getgenv().ShowTargetLine = false
-getgenv().ShowTargetInfo = false
 
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
 fovCircle.Thickness = 1.5
 fovCircle.Color = Color3.fromRGB(255, 0, 0)
 fovCircle.Filled = false
-
-local targetLine = Drawing.new("Line")
-targetLine.Visible = false
-targetLine.Thickness = 1.5
-targetLine.Color = Color3.fromRGB(255, 50, 50)
-
-local targetInfo = Drawing.new("Text")
-targetInfo.Visible = false
-targetInfo.Color = Color3.fromRGB(255, 255, 255)
-targetInfo.Size = 16
-targetInfo.Center = true
-targetInfo.Outline = true
 
 local espCache = {}
 
@@ -60,44 +46,26 @@ local function getScreenData(position)
     return (screen.Z < 0) and (mid - (diff * scale)) or (mid + (diff * scale)), false
 end
 
-local function getClosestTarget()
-    local closestTarget = nil
-    local shortestDistance = getgenv().FOVSize
-    local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    for _, target in pairs(Players:GetPlayers()) do
-        if target ~= Player and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
-            local targetPart
-            if getgenv().AimPart == "Random" then
-                local parts = {"Head", "Torso", "HumanoidRootPart", "LeftArm", "RightArm"}
-                targetPart = target.Character:FindFirstChild(parts[math.random(1, #parts)])
-            else
-                targetPart = target.Character:FindFirstChild(getgenv().AimPart)
-            end
-            if not targetPart then
-                targetPart = target.Character:FindFirstChild("Head")
-            end
-            if targetPart then
-                local screenPos, onScreen = Camera:WorldToScreenPoint(targetPart.Position)
-                if onScreen then
-                    local distance = (mousePos - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
-                    if distance < shortestDistance then
-                        closestTarget = {Part = targetPart, Player = target, ScreenPos = screenPos}
-                        shortestDistance = distance
+local function findBestTarget()
+    local target, nearest = nil, getgenv().FOVSize
+    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player and p.Character then
+            local humanoid = p.Character:FindFirstChild("Humanoid")
+            local hitPart = p.Character:FindFirstChild(getgenv().AimPart)
+            if humanoid and hitPart and humanoid.Health > 0 then
+                local screen, visible = Camera:WorldToViewportPoint(hitPart.Position)
+                if visible then
+                    local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
+                    if dist < nearest then
+                        nearest = dist
+                        target = hitPart
                     end
                 end
             end
         end
     end
-    return closestTarget
-end
-
-local function getPredictedPosition(targetPart)
-    local targetPos = targetPart.Position
-    if getgenv().Prediction and getgenv().Prediction > 0 and targetPart.Parent and targetPart.Parent:FindFirstChild("HumanoidRootPart") then
-        local velocity = targetPart.Parent.HumanoidRootPart.Velocity
-        targetPos = targetPos + velocity * (getgenv().Prediction or 0.165)
-    end
-    return targetPos
+    return target
 end
 
 local function cleanupESP()
@@ -110,8 +78,6 @@ local function cleanupESP()
     end
     table.clear(espCache)
     if fovCircle then fovCircle:Remove() end
-    if targetLine then targetLine:Remove() end
-    if targetInfo then targetInfo:Remove() end
 end
 
 local renderConnection
@@ -121,32 +87,10 @@ renderConnection = RunService.RenderStepped:Connect(function()
     fovCircle.Radius = getgenv().FOVSize
     fovCircle.Visible = getgenv().Aimbot
     if getgenv().Aimbot then
-        local targetData = getClosestTarget()
-        if targetData then
-            local targetPos = getPredictedPosition(targetData.Part)
-            local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-            Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, getgenv().AimSpeed)
-            if getgenv().ShowTargetLine then
-                targetLine.Visible = true
-                targetLine.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                targetLine.To = Vector2.new(targetData.ScreenPos.X, targetData.ScreenPos.Y)
-            else
-                targetLine.Visible = false
-            end
-            if getgenv().ShowTargetInfo then
-                targetInfo.Visible = true
-                targetInfo.Position = Vector2.new(targetData.ScreenPos.X, targetData.ScreenPos.Y - 50)
-                targetInfo.Text = targetData.Player.Name .. " [" .. math.floor(targetData.Player.Character.Humanoid.Health) .. "HP]"
-            else
-                targetInfo.Visible = false
-            end
-        else
-            targetLine.Visible = false
-            targetInfo.Visible = false
+        local target = findBestTarget()
+        if target then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, target.Position), getgenv().AimSpeed)
         end
-    else
-        targetLine.Visible = false
-        targetInfo.Visible = false
     end
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= Player then
@@ -619,7 +563,6 @@ leftArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
 leftArrow.Font = Enum.Font.GothamBold
 leftArrow.TextSize = 10
 leftArrow.Visible = false
-leftArrow.ZIndex = 20
 leftArrow.Parent = StatusBar
 
 local rightArrow = Instance.new("TextButton")
@@ -631,83 +574,73 @@ rightArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
 rightArrow.Font = Enum.Font.GothamBold
 rightArrow.TextSize = 10
 rightArrow.Visible = false
-rightArrow.ZIndex = 20
 rightArrow.Parent = StatusBar
 
-local activeFuncsCache = {}
-
-local function getActiveFuncs()
-    local funcs = {}
-    if getgenv().ESPPlayers then table.insert(funcs, "ESP") end
-    if getgenv().Aimbot then table.insert(funcs, "Aim") end
-    if getgenv().Tracers then table.insert(funcs, "Trace") end
-    if getgenv().AntiAFK then table.insert(funcs, "AFK") end
-    return funcs
-end
-
 local function updateStatusBar()
-    local funcs = getActiveFuncs()
-    activeFuncsCache = funcs
-    if #funcs == 0 then
+    local activeFuncs = {}
+    if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
+    if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
+    if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
+    if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
+    if #activeFuncs == 0 then
         StatusText.Text = "No functions active"
         leftArrow.Visible = false
         rightArrow.Visible = false
-        StatusToggleBg.Visible = false
         return
     end
-    local currentIndex = StatusBar:GetAttribute("CurrentIndex") or 1
-    if currentIndex > #funcs then currentIndex = 1 end
+    local currentIndex = tonumber(StatusBar:GetAttribute("CurrentIndex")) or 1
+    if currentIndex > #activeFuncs then currentIndex = 1 end
     if currentIndex < 1 then currentIndex = 1 end
-    StatusText.Text = funcs[currentIndex]
+    StatusText.Text = activeFuncs[currentIndex]
     StatusBar:SetAttribute("CurrentIndex", currentIndex)
-    if #funcs > 1 then
-        leftArrow.Visible = true
-        rightArrow.Visible = true
+    leftArrow.Visible = (#activeFuncs > 1)
+    rightArrow.Visible = (#activeFuncs > 1)
+    if #activeFuncs > 1 then
         leftArrow.TextColor3 = (currentIndex > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-        rightArrow.TextColor3 = (currentIndex < #funcs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-    else
-        leftArrow.Visible = false
-        rightArrow.Visible = false
+        rightArrow.TextColor3 = (currentIndex < #activeFuncs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
     end
-    StatusToggleBg.Visible = true
 end
 
 leftArrow.MouseButton1Click:Connect(function()
-    local funcs = getActiveFuncs()
-    if #funcs <= 1 then return end
+    local activeFuncs = {}
+    if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
+    if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
+    if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
+    if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
+    if #activeFuncs <= 1 then return end
     local idx = StatusBar:GetAttribute("CurrentIndex") or 1
     idx = idx - 1
-    if idx < 1 then idx = #funcs end
+    if idx < 1 then idx = #activeFuncs end
     StatusBar:SetAttribute("CurrentIndex", idx)
     TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0, -20, 0, 0)
     }):Play()
     task.wait(0.1)
-    StatusText.Text = funcs[idx]
+    updateStatusBar()
     TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0, 8, 0, 0)
     }):Play()
-    leftArrow.TextColor3 = (idx > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-    rightArrow.TextColor3 = (idx < #funcs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
 end)
 
 rightArrow.MouseButton1Click:Connect(function()
-    local funcs = getActiveFuncs()
-    if #funcs <= 1 then return end
+    local activeFuncs = {}
+    if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
+    if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
+    if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
+    if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
+    if #activeFuncs <= 1 then return end
     local idx = StatusBar:GetAttribute("CurrentIndex") or 1
     idx = idx + 1
-    if idx > #funcs then idx = 1 end
+    if idx > #activeFuncs then idx = 1 end
     StatusBar:SetAttribute("CurrentIndex", idx)
     TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0, 20, 0, 0)
     }):Play()
     task.wait(0.1)
-    StatusText.Text = funcs[idx]
+    updateStatusBar()
     TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0, 8, 0, 0)
     }):Play()
-    leftArrow.TextColor3 = (idx > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-    rightArrow.TextColor3 = (idx < #funcs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
 end)
 
 local winDragging = false
@@ -1630,10 +1563,10 @@ MinBtn.MouseButton1Click:Connect(function()
         SidePanel.Visible = false
         ContentPanel.Visible = false
         CollapseBtn.Visible = false
+        StatusToggleBg.Visible = true
         StatusBar:TweenSize(UDim2.new(0, 175, 0, 26), "Out", "Quad", 0.25, true)
         StatusBar.Position = UDim2.new(1, -240, 0, 4)
         StatusBar.BackgroundTransparency = 0
-        StatusToggleBg.Visible = true
         updateStatusBar()
     else
         MainFrame:TweenSize(UDim2.new(0, GUI_WIDTH, 0, GUI_HEIGHT), "Out", "Quad", 0.25, true)
@@ -1736,7 +1669,6 @@ if TabContents["Home"] then
     end
 end
 
-updateStatusBar()
 task.wait(0.5)
 createNotification("Notification", "The script was created by the Vanezy Scripts team", 5)
 
