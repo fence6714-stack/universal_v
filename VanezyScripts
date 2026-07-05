@@ -1,4 +1,8 @@
-local function encrypt_and_run(script)
+-- ============================================
+-- ГЕНЕРАТОР ЗАЩИЩЁННОГО ФАЙЛА (запусти 1 раз)
+-- ============================================
+
+local function generate_protected(script)
     local bytes = {}
     for i = 1, #script do
         bytes[i] = string.byte(script, i)
@@ -15,20 +19,21 @@ local function encrypt_and_run(script)
         bytes[i] = bytes[i] ~ kb
     end
     
-    local protected = string.format([[
-        local k = "%s"
-        local d = {%s}
-        local r = {}
-        for i = 1, #d do
-            r[i] = string.char(d[i] ~ string.byte(k, (i-1) %% #k + 1))
-        end
-        loadstring(table.concat(r))()
-    ]], key, table.concat(bytes, ","))
-    
-    return protected
+    return string.format([[
+local k = "%s"
+local d = {%s}
+local r = {}
+for i = 1, #d do
+    r[i] = string.char(d[i] ~ string.byte(k, (i-1) %% #k + 1))
+end
+loadstring(table.concat(r))()
+]], key, table.concat(bytes, ","))
 end
 
-local protected_script = encrypt_and_run([[
+-- ============================================
+-- ВСТАВЬ СВОЙ ПОЛНЫЙ СКРИПТ СЮДА (БЕЗ ШИФРАТОРА!)
+-- ============================================
+local your_script = [[
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
@@ -1772,6 +1777,19 @@ task.wait(0.5)
 createNotification("Notification", "The script was created by the Vanezy Scripts team", 5)
 
 print("〔V〕Hub v1 loaded!")
-]])
+]]
 
-loadstring(protected_script)()
+-- ============================================
+-- ГЕНЕРИРУЕМ ЗАЩИЩЁННУЮ ВЕРСИЮ
+-- ============================================
+local protected = generate_protected(your_script)
+
+-- ВЫВОДИМ РЕЗУЛЬТАТ
+print("=== СКОПИРУЙ ЭТО В ФАЙЛ НА GITHUB ===")
+print(protected)
+print("=== КОНЕЦ ===")
+
+-- Копируем в буфер обмена (если есть)
+if pcall(function() setclipboard(protected) end) then
+    print("✅ Защищённый код скопирован в буфер обмена!")
+end
