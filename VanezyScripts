@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
 
 getgenv().ESPPlayers = false
+getgenv().ESPTeammates = false
 getgenv().Aimbot = false
 getgenv().Tracers = false
 getgenv().AimSpeed = 0.3
@@ -46,6 +47,11 @@ local function getScreenData(position)
     return (screen.Z < 0) and (mid - (diff * scale)) or (mid + (diff * scale)), false
 end
 
+local function isTeammate(player)
+    if not Player.Team or not player.Team then return false end
+    return Player.Team == player.Team
+end
+
 local function findBestTarget()
     local target, nearest = nil, getgenv().FOVSize
     local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -54,6 +60,7 @@ local function findBestTarget()
             local humanoid = p.Character:FindFirstChild("Humanoid")
             local hitPart = p.Character:FindFirstChild(getgenv().AimPart)
             if humanoid and hitPart and humanoid.Health > 0 then
+                if isTeammate(p) then continue end
                 local screen, visible = Camera:WorldToViewportPoint(hitPart.Position)
                 if visible then
                     local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
@@ -70,6 +77,7 @@ end
 
 local function cleanupESP()
     getgenv().ESPPlayers = false
+    getgenv().ESPTeammates = false
     getgenv().Tracers = false
     getgenv().Aimbot = false
     for _, data in pairs(espCache) do
@@ -96,17 +104,25 @@ renderConnection = RunService.RenderStepped:Connect(function()
         if p ~= Player then
             local char = p.Character
             if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                local isTeam = isTeammate(p)
+                if not getgenv().ESPTeammates and isTeam then
+                    if espCache[p] then
+                        espCache[p].line.Visible = false
+                        espCache[p].box.Visible = false
+                    end
+                    continue
+                end
                 initDraw(p)
                 local data = espCache[p]
                 local root = char.HumanoidRootPart
                 local screenPos, onScreen = getScreenData(root.Position)
                 local distance = (Camera.CFrame.Position - root.Position).Magnitude
-                local color = Color3.fromHSV(math.clamp(distance / getgenv().MaxDistance, 0, 0.33), 1, 1)
+                local color = isTeam and Color3.fromHSV(0.55, 1, 1) or Color3.fromHSV(math.clamp(distance / getgenv().MaxDistance, 0, 0.33), 1, 1)
                 data.line.From = mid
                 data.line.To = screenPos
                 data.line.Color = color
                 data.line.Visible = getgenv().Tracers
-                if getgenv().ESPPlayers and onScreen then
+                if (getgenv().ESPPlayers or (getgenv().ESPTeammates and isTeam)) and onScreen then
                     local size = math.clamp(2500 / distance, 5, 300)
                     data.box.Size = Vector2.new(size, size * 1.5)
                     data.box.Position = Vector2.new(screenPos.X - size / 2, screenPos.Y - size * 0.75)
@@ -567,7 +583,7 @@ leftArrow.Parent = StatusBar
 
 local rightArrow = Instance.new("TextButton")
 rightArrow.Size = UDim2.new(0, 14, 0, 14)
-rightArrow.Position = UDim2.new(0, 115, 0.5, -7)
+rightArrow.Position = UDim2.new(0, 157, 0.5, -7)
 rightArrow.BackgroundTransparency = 1
 rightArrow.Text = "▶"
 rightArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
@@ -579,6 +595,7 @@ rightArrow.Parent = StatusBar
 local function updateStatusBar()
     local activeFuncs = {}
     if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
+    if getgenv().ESPTeammates then table.insert(activeFuncs, "ESP Team") end
     if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
     if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
     if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
@@ -593,9 +610,14 @@ local function updateStatusBar()
     if currentIndex < 1 then currentIndex = 1 end
     StatusText.Text = activeFuncs[currentIndex]
     StatusBar:SetAttribute("CurrentIndex", currentIndex)
-    leftArrow.Visible = (#activeFuncs > 1)
-    rightArrow.Visible = (#activeFuncs > 1)
-    if #activeFuncs > 1 then
+    if #activeFuncs <= 1 then
+        leftArrow.Visible = true
+        rightArrow.Visible = true
+        leftArrow.TextColor3 = Color3.fromRGB(80, 80, 80)
+        rightArrow.TextColor3 = Color3.fromRGB(80, 80, 80)
+    else
+        leftArrow.Visible = true
+        rightArrow.Visible = true
         leftArrow.TextColor3 = (currentIndex > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
         rightArrow.TextColor3 = (currentIndex < #activeFuncs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
     end
@@ -604,6 +626,7 @@ end
 leftArrow.MouseButton1Click:Connect(function()
     local activeFuncs = {}
     if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
+    if getgenv().ESPTeammates then table.insert(activeFuncs, "ESP Team") end
     if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
     if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
     if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
@@ -613,7 +636,7 @@ leftArrow.MouseButton1Click:Connect(function()
     if idx < 1 then idx = #activeFuncs end
     StatusBar:SetAttribute("CurrentIndex", idx)
     TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, -20, 0, 0)
+        Position = UDim2.new(0, 20, 0, 0)
     }):Play()
     task.wait(0.1)
     updateStatusBar()
@@ -625,6 +648,7 @@ end)
 rightArrow.MouseButton1Click:Connect(function()
     local activeFuncs = {}
     if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
+    if getgenv().ESPTeammates then table.insert(activeFuncs, "ESP Team") end
     if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
     if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
     if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
@@ -634,7 +658,7 @@ rightArrow.MouseButton1Click:Connect(function()
     if idx > #activeFuncs then idx = 1 end
     StatusBar:SetAttribute("CurrentIndex", idx)
     TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 20, 0, 0)
+        Position = UDim2.new(0, -4, 0, 0)
     }):Play()
     task.wait(0.1)
     updateStatusBar()
@@ -675,8 +699,8 @@ SidePanel.Parent = MainFrame
 local ContentPanel = Instance.new("Frame")
 ContentPanel.Size = UDim2.new(1, -SIDEBAR_WIDTH, 1, -48)
 ContentPanel.Position = UDim2.new(0, SIDEBAR_WIDTH, 0, 48)
-ContentPanel.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
-ContentPanel.BackgroundTransparency = 0.4
+ContentPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ContentPanel.BackgroundTransparency = 0.85
 ContentPanel.BorderSizePixel = 0
 ContentPanel.ClipsDescendants = true
 ContentPanel.Parent = MainFrame
@@ -853,10 +877,10 @@ for i, tab in ipairs(Tabs) do
     Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
 
     local line = Instance.new("Frame")
-    line.Size = UDim2.new(0.6, 0, 0, 2)
-    line.Position = UDim2.new(0.2, 0, 1, -4)
+    line.Size = UDim2.new(0.4, 0, 0, 2)
+    line.Position = UDim2.new(0.3, 0, 1, -4)
     line.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    line.BackgroundTransparency = 0.6
+    line.BackgroundTransparency = 0.4
     line.BorderSizePixel = 0
     line.Visible = false
     line.Parent = tabBtn
@@ -917,7 +941,7 @@ for i, tab in ipairs(Tabs) do
             }):Play()
             task.delay(0.25, function()
                 if TabLines[oldTab] then TabLines[oldTab].Visible = false end
-                if TabLines[oldTab] then TabLines[oldTab].Position = UDim2.new(0.2, 0, 1, -4) end
+                if TabLines[oldTab] then TabLines[oldTab].Position = UDim2.new(0.3, 0, 1, -4) end
             end)
         end
 
@@ -948,17 +972,17 @@ for i, tab in ipairs(Tabs) do
         end
 
         tabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        tabBtn.BackgroundTransparency = 0.9
+        tabBtn.BackgroundTransparency = 0.92
         tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         iconBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        iconBtn.BackgroundTransparency = 0.9
+        iconBtn.BackgroundTransparency = 0.92
         iconBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
         if tab.Name ~= "Settings" then
             line.Visible = true
             line.Position = UDim2.new(-0.3, 0, 1, -4)
             TweenService:Create(line, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0.2, 0, 1, -4)
+                Position = UDim2.new(0.3, 0, 1, -4)
             }):Play()
         end
 
@@ -987,21 +1011,21 @@ HeaderSettingsBtn.MouseButton1Click:Connect(function()
         }):Play()
         task.delay(0.25, function()
             if TabLines[oldTab] then TabLines[oldTab].Visible = false end
-            if TabLines[oldTab] then TabLines[oldTab].Position = UDim2.new(0.2, 0, 1, -4) end
+            if TabLines[oldTab] then TabLines[oldTab].Position = UDim2.new(0.3, 0, 1, -4) end
         end)
     end
     HeaderSettingsBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    HeaderSettingsBtn.BackgroundTransparency = 0.9
+    HeaderSettingsBtn.BackgroundTransparency = 0.92
     HeaderSettingsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     hideAllTabs()
     local content = TabContents["Settings"]
     content.Visible = true
     TabButtons["Settings"].BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TabButtons["Settings"].BackgroundTransparency = 0.9
+    TabButtons["Settings"].BackgroundTransparency = 0.92
     TabButtons["Settings"].TextColor3 = Color3.fromRGB(255, 255, 255)
     if TabIconsOnly["Settings"] then
         TabIconsOnly["Settings"].BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabIconsOnly["Settings"].BackgroundTransparency = 0.9
+        TabIconsOnly["Settings"].BackgroundTransparency = 0.92
     end
     local totalH = 0
     for _, child in pairs(content:GetChildren()) do
@@ -1159,6 +1183,59 @@ espToggleBg.InputBegan:Connect(function(input)
             espToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             espToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
             createNotification("ESP", "❌ ESP Players disabled", 4)
+        end
+        updateStatusBar()
+    end
+end)
+
+local espTeamFrame = Instance.new("Frame")
+espTeamFrame.Size = UDim2.new(1, -16, 0, 42)
+espTeamFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+espTeamFrame.BackgroundTransparency = 0.6
+espTeamFrame.BorderSizePixel = 0
+espTeamFrame.Parent = mainContent
+Instance.new("UICorner", espTeamFrame).CornerRadius = UDim.new(0, 6)
+
+local espTeamLabel = Instance.new("TextLabel")
+espTeamLabel.Size = UDim2.new(0.5, 0, 1, 0)
+espTeamLabel.Position = UDim2.new(0, 28, 0, 0)
+espTeamLabel.BackgroundTransparency = 1
+espTeamLabel.Text = "ESP Teammates"
+espTeamLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+espTeamLabel.Font = Enum.Font.GothamBold
+espTeamLabel.TextSize = 13
+espTeamLabel.TextXAlignment = Enum.TextXAlignment.Left
+espTeamLabel.Parent = espTeamFrame
+
+createHelpButton(espTeamFrame, "Shows ESP on your teammates. Toggle ON/OFF.")
+
+local espTeamToggleBg = Instance.new("Frame")
+espTeamToggleBg.Size = UDim2.new(0, 44, 0, 24)
+espTeamToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+espTeamToggleBg.BorderSizePixel = 0
+espTeamToggleBg.Parent = espTeamFrame
+Instance.new("UICorner", espTeamToggleBg).CornerRadius = UDim.new(1, 0)
+
+local espTeamToggleDot = Instance.new("Frame")
+espTeamToggleDot.Size = UDim2.new(0, 20, 0, 20)
+espTeamToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+espTeamToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+espTeamToggleDot.BorderSizePixel = 0
+espTeamToggleDot.Parent = espTeamToggleBg
+Instance.new("UICorner", espTeamToggleDot).CornerRadius = UDim.new(1, 0)
+
+espTeamToggleBg.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        getgenv().ESPTeammates = not getgenv().ESPTeammates
+        if getgenv().ESPTeammates then
+            espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+            espTeamToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            createNotification("ESP Teammates", "✅ ESP Teammates enabled", 4)
+        else
+            espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            espTeamToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            createNotification("ESP Teammates", "❌ ESP Teammates disabled", 4)
         end
         updateStatusBar()
     end
@@ -1563,7 +1640,6 @@ MinBtn.MouseButton1Click:Connect(function()
         SidePanel.Visible = false
         ContentPanel.Visible = false
         CollapseBtn.Visible = false
-        StatusToggleBg.Visible = true
         StatusBar:TweenSize(UDim2.new(0, 175, 0, 26), "Out", "Quad", 0.25, true)
         StatusBar.Position = UDim2.new(1, -240, 0, 4)
         StatusBar.BackgroundTransparency = 0
@@ -1575,7 +1651,6 @@ MinBtn.MouseButton1Click:Connect(function()
         CollapseBtn.Visible = true
         StatusBar:TweenSize(UDim2.new(0, 0, 0, 26), "Out", "Quad", 0.2, true)
         StatusBar.BackgroundTransparency = 1
-        StatusToggleBg.Visible = false
         leftArrow.Visible = false
         rightArrow.Visible = false
     end
@@ -1660,11 +1735,11 @@ if TabContents["Home"] then
     TabContents["Home"].Visible = true
     if TabButtons["Home"] then
         TabButtons["Home"].BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabButtons["Home"].BackgroundTransparency = 0.9
+        TabButtons["Home"].BackgroundTransparency = 0.92
         TabButtons["Home"].TextColor3 = Color3.fromRGB(255, 255, 255)
         if TabLines["Home"] then
             TabLines["Home"].Visible = true
-            TabLines["Home"].Position = UDim2.new(0.2, 0, 1, -4)
+            TabLines["Home"].Position = UDim2.new(0.3, 0, 1, -4)
         end
     end
 end
