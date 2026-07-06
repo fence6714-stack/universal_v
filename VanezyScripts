@@ -332,6 +332,26 @@ end
 local renderConnection
 renderConnection = RunService.RenderStepped:Connect(function()
     local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+     if getgenv().Aimbot then
+     local target = findBestTarget()
+     if target then
+         -- Наводим камеру
+         Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, target.Position), getgenv().AimSpeed)
+        
+        -- СИНХРОНИЗАЦИЯ МЫШИ (ЭТО ВСТАВЬ!)
+        pcall(function()
+            local ray = Camera:ViewportPointToRay(
+                Camera.ViewportSize.X / 2,
+                Camera.ViewportSize.Y / 2
+            )
+            local hit, pos = workspace:Raycast(ray.Origin, ray.Direction * 1000)
+            if hit then
+                Mouse.Hit = CFrame.new(pos)
+                Mouse.UnitRay = ray
+            end
+        end)
+    end
+end
     
     -- Fly управление
     if getgenv().Fly and flyBodyVelocity then
