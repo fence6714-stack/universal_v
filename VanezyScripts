@@ -656,7 +656,7 @@ local function removeNotification(nf, customButtons)
         pcall(function()
             -- Определяем тип уведомления по его свойствам
             local isConfirm = customButtons
-            local isFirst = (n.Title == "Notification" and n.Message:find("Vanezy Scripts"))
+            local isFirst = false
             local tx, toff = 0.5, -135
             if not isConfirm and not isFirst then
                 tx, toff = 1, -270
@@ -677,15 +677,13 @@ function createNotification(title, message, duration, customButtons)
     local nf = Instance.new("Frame")
     nf.Size = UDim2.new(0, 270, 0, customButtons and 90 or 62)
     
-    -- ОПРЕДЕЛЯЕМ ТИП УВЕДОМЛЕНИЯ
-    local isConfirm = customButtons  -- Подтверждение закрытия
-    local isFirst = (title == "Notification" and message:find("Vanezy Scripts"))  -- Первое уведомление
+    local isConfirm = customButtons
+    local isFirst = (title == "Notification" and message:find("Vanezy Scripts"))
     
-    -- ПОЗИЦИЯ:
     if isConfirm or isFirst then
-        nf.Position = UDim2.new(0.5, -135, 0, -100)  -- По центру
+        nf.Position = UDim2.new(0.5, -135, 0, -100)
     else
-        nf.Position = UDim2.new(1, -270, 0, -50)     -- Справа, высота -50
+        nf.Position = UDim2.new(1, -270, 0, -50)
     end
     
     nf.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
@@ -755,19 +753,17 @@ function createNotification(title, message, duration, customButtons)
     timeLine.ZIndex = 10
     timeLine.Parent = nf
     local yPos = -5 + (#activeNotifications * (customButtons and 100 or 72))
-
-local targetX, targetOffset
-if isConfirm or isFirst then
-    targetX = 0.5
-    targetOffset = -135
-else
-    targetX = 1
-    targetOffset = -270
-end
-
-TweenService:Create(nf, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-    Position = UDim2.new(targetX, targetOffset, 0, yPos)
-}):Play()
+    local targetX, targetOffset
+    if isConfirm or isFirst then
+        targetX = 0.5
+        targetOffset = -135
+    else
+        targetX = 1
+        targetOffset = -270
+    end
+    TweenService:Create(nf, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(targetX, targetOffset, 0, yPos)
+    }):Play()
     local lineTween = TweenService:Create(timeLine, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 0, 2)})
     lineTween:Play()
     local isClosed = false
@@ -776,14 +772,14 @@ TweenService:Create(nf, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDir
         isClosed = true
         pcall(function() lineTween:Cancel() end)
         local closeX, closeOffset
-if isConfirm or isFirst then
-    closeX = 0.5
-    closeOffset = -135
-else
-    closeX = 1
-    closeOffset = -270
-end
-local ht = TweenService:Create(nf, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(closeX, closeOffset, 0, -100)})
+        if isConfirm or isFirst then
+            closeX = 0.5
+            closeOffset = -135
+        else
+            closeX = 1
+            closeOffset = -270
+        end
+        local ht = TweenService:Create(nf, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(closeX, closeOffset, 0, -100)})
         ht:Play()
         ht.Completed:Connect(function()
             if nf and nf.Parent then nf:Destroy() end
