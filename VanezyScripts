@@ -27,6 +27,70 @@ getgenv().Triggerbot = false
 getgenv().FlySpeed = 60
 getgenv().SpeedMultiplier = 2.5
 
+local silentAimTarget = nil
+
+local function getSilentAimTarget()
+    local target, nearest = nil, getgenv().FOVSize
+    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player and p.Character then
+            local hum = p.Character:FindFirstChild("Humanoid")
+            local head = p.Character:FindFirstChild("Head")
+            if hum and head and hum.Health > 0 then
+                if isTeammate(p) then continue end
+                local screen, visible = Camera:WorldToViewportPoint(head.Position)
+                if visible then
+                    local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
+                    if dist < getgenv().FOVSize and dist < nearest then
+                        nearest = dist
+                        target = head
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+local function silentShoot()
+    if not getgenv().Aimbot then return end
+    
+    local target = getSilentAimTarget()
+    if not target then return end
+    
+    local tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
+    if not tool then return end
+    
+    local targetPos = target.Position + Vector3.new(0, 0.5, 0)
+    
+    -- Отправляем выстрел в цель
+    for _, obj in ipairs(tool:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            pcall(function() obj:FireServer(targetPos, target, Vector3.new(0, 1, 0)) end)
+            pcall(function() obj:FireServer(targetPos, target) end)
+            pcall(function() obj:FireServer(targetPos) end)
+        end
+    end
+    
+    -- Общие названия RemoteEvent
+    for _, name in ipairs({"Fire", "Shoot", "RemoteEvent", "Hit", "Replicate"}) do
+        local r = tool:FindFirstChild(name)
+        if r and r:IsA("RemoteEvent") then
+            pcall(function() r:FireServer(targetPos, target) end)
+            pcall(function() r:FireServer(targetPos) end)
+        end
+    end
+    
+    -- Для Rivals через ReplicatedStorage
+    pcall(function()
+        local hitRemote = game:GetService("ReplicatedStorage"):FindFirstChild("Hit")
+        if hitRemote then
+            hitRemote:FireServer(targetPos, target)
+        end
+    end)
+end
+
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
 fovCircle.Thickness = 1.5
@@ -2441,7 +2505,8 @@ end)
 CollapseBtn.MouseButton1Click:Connect(function()
     sidebarCollapsed = not sidebarCollapsed
     if sidebarCollapsed then
-        SidePanel:TweenSize(UDim2.new(0, SIDEBAR_COLLAPSED_WIDTH, 1, -48), "Out", "Quad", 0.25, true)
+        SidePanel:TweenSize(UDim2
+SIDEBAR_COLLAPSED_WIDTH, 1, -48), "Out", "Quad", 0.25, true)
         ContentPanel:TweenSize(UDim2.new(1, -SIDEBAR_COLLAPSED_WIDTH, 1, -48), "Out", "Quad", 0.25, true)
         ContentPanel:TweenPosition(UDim2.new(0, SIDEBAR_COLLAPSED_WIDTH, 0, 48), "Out", "Quad", 0.25, true)
         CollapseBtn:TweenPosition(UDim2.new(0, SIDEBAR_COLLAPSED_WIDTH - 8, 1, -22), "Out", "Quad", 0.25, true)
@@ -2585,6 +2650,14 @@ if TabContents["Home"] then
 end
 
 task.wait(0.5)
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        if getgenv().Aimbot then
+            silentShoot()
+        end
+    end
+end)
 createNotification("Notification", "The script was created by the Vanezy Scripts team", 5)
 
 print("〔V〕Hub v1 loaded!")
