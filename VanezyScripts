@@ -28,70 +28,6 @@ getgenv().Triggerbot = false
 getgenv().FlySpeed = 60
 getgenv().SpeedMultiplier = 2.5
 
-local silentAimTarget = nil
-
-local function getSilentAimTarget()
-    local target, nearest = nil, getgenv().FOVSize
-    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= Player and p.Character then
-            local hum = p.Character:FindFirstChild("Humanoid")
-            local head = p.Character:FindFirstChild("Head")
-            if hum and head and hum.Health > 0 then
-                if isTeammate(p) then continue end
-                local screen, visible = Camera:WorldToViewportPoint(head.Position)
-                if visible then
-                    local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
-                    if dist < getgenv().FOVSize and dist < nearest then
-                        nearest = dist
-                        target = head
-                    end
-                end
-            end
-        end
-    end
-    return target
-end
-
-local function silentShoot()
-    if not getgenv().Aimbot then return end
-    
-    local target = getSilentAimTarget()
-    if not target then return end
-    
-    local tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
-    if not tool then return end
-    
-    local targetPos = target.Position + Vector3.new(0, 0.5, 0)
-    
-    -- Отправляем выстрел в цель
-    for _, obj in ipairs(tool:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            pcall(function() obj:FireServer(targetPos, target, Vector3.new(0, 1, 0)) end)
-            pcall(function() obj:FireServer(targetPos, target) end)
-            pcall(function() obj:FireServer(targetPos) end)
-        end
-    end
-    
-    -- Общие названия RemoteEvent
-    for _, name in ipairs({"Fire", "Shoot", "RemoteEvent", "Hit", "Replicate"}) do
-        local r = tool:FindFirstChild(name)
-        if r and r:IsA("RemoteEvent") then
-            pcall(function() r:FireServer(targetPos, target) end)
-            pcall(function() r:FireServer(targetPos) end)
-        end
-    end
-    
-    -- Для Rivals через ReplicatedStorage
-    pcall(function()
-        local hitRemote = game:GetService("ReplicatedStorage"):FindFirstChild("Hit")
-        if hitRemote then
-            hitRemote:FireServer(targetPos, target)
-        end
-    end)
-end
-
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
 fovCircle.Thickness = 1.5
@@ -166,6 +102,70 @@ end
 local function isTeammate(player)
     if not Player.Team or not player.Team then return false end
     return Player.Team == player.Team
+end
+
+local silentAimTarget = nil
+
+local function getSilentAimTarget()
+    local target, nearest = nil, getgenv().FOVSize
+    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player and p.Character then
+            local hum = p.Character:FindFirstChild("Humanoid")
+            local head = p.Character:FindFirstChild("Head")
+            if hum and head and hum.Health > 0 then
+                if isTeammate(p) then continue end
+                local screen, visible = Camera:WorldToViewportPoint(head.Position)
+                if visible then
+                    local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
+                    if dist < getgenv().FOVSize and dist < nearest then
+                        nearest = dist
+                        target = head
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+local function silentShoot()
+    if not getgenv().Aimbot then return end
+    
+    local target = getSilentAimTarget()
+    if not target then return end
+    
+    local tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
+    if not tool then return end
+    
+    local targetPos = target.Position + Vector3.new(0, 0.5, 0)
+    
+    -- Отправляем выстрел в цель
+    for _, obj in ipairs(tool:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            pcall(function() obj:FireServer(targetPos, target, Vector3.new(0, 1, 0)) end)
+            pcall(function() obj:FireServer(targetPos, target) end)
+            pcall(function() obj:FireServer(targetPos) end)
+        end
+    end
+    
+    -- Общие названия RemoteEvent
+    for _, name in ipairs({"Fire", "Shoot", "RemoteEvent", "Hit", "Replicate"}) do
+        local r = tool:FindFirstChild(name)
+        if r and r:IsA("RemoteEvent") then
+            pcall(function() r:FireServer(targetPos, target) end)
+            pcall(function() r:FireServer(targetPos) end)
+        end
+    end
+    
+    -- Для Rivals через ReplicatedStorage
+    pcall(function()
+        local hitRemote = game:GetService("ReplicatedStorage"):FindFirstChild("Hit")
+        if hitRemote then
+            hitRemote:FireServer(targetPos, target)
+        end
+    end)
 end
 
 local function findBestTarget()
@@ -607,8 +607,14 @@ local function removeNotification(nf, customButtons)
     for i, n in ipairs(activeNotifications) do
         local ny = 5 + ((i - 1) * (customButtons and 100 or 72))
         pcall(function()
+            local isConfirm = customButtons
+            local isFirst = (n.Title == "Notification" and n.Message:find("Vanezy Scripts"))
+            local tx, toff = 0.5, -135
+            if not isConfirm and not isFirst then
+                tx, toff = 1, -270
+            end
             TweenService:Create(n, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0.5, -135, 0, ny)
+                Position = UDim2.new(tx, toff, 0, ny)
             }):Play()
         end)
     end
@@ -622,7 +628,18 @@ function createNotification(title, message, duration, customButtons)
     end
     local nf = Instance.new("Frame")
     nf.Size = UDim2.new(0, 270, 0, customButtons and 90 or 62)
-    nf.Position = UDim2.new(0.5, -135, 0, -100)
+    
+    -- ОПРЕДЕЛЯЕМ ТИП УВЕДОМЛЕНИЯ
+    local isConfirm = customButtons  -- Подтверждение закрытия
+    local isFirst = (title == "Notification" and message:find("Vanezy Scripts"))  -- Первое уведомление
+    
+    -- ПОЗИЦИЯ:
+    if isConfirm or isFirst then
+        nf.Position = UDim2.new(0.5, -135, 0, -100)  -- По центру
+    else
+        nf.Position = UDim2.new(1, -270, 0, -50)     -- Справа, высота -50
+    end
+    
     nf.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
     nf.BorderSizePixel = 0
     nf.ClipsDescendants = true
@@ -690,9 +707,19 @@ function createNotification(title, message, duration, customButtons)
     timeLine.ZIndex = 10
     timeLine.Parent = nf
     local yPos = -5 + (#activeNotifications * (customButtons and 100 or 72))
-    TweenService:Create(nf, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -135, 0, yPos)
-    }):Play()
+
+local targetX, targetOffset
+if isConfirm or isFirst then
+    targetX = 0.5
+    targetOffset = -135
+else
+    targetX = 1
+    targetOffset = -270
+end
+
+TweenService:Create(nf, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Position = UDim2.new(targetX, targetOffset, 0, yPos)
+}):Play()
     local lineTween = TweenService:Create(timeLine, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 0, 2)})
     lineTween:Play()
     local isClosed = false
@@ -700,7 +727,15 @@ function createNotification(title, message, duration, customButtons)
         if isClosed then return end
         isClosed = true
         pcall(function() lineTween:Cancel() end)
-        local ht = TweenService:Create(nf, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -135, 0, -100)})
+        local closeX, closeOffset
+if isConfirm or isFirst then
+    closeX = 0.5
+    closeOffset = -135
+else
+    closeX = 1
+    closeOffset = -270
+end
+local ht = TweenService:Create(nf, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(closeX, closeOffset, 0, -100)})
         ht:Play()
         ht.Completed:Connect(function()
             if nf and nf.Parent then nf:Destroy() end
