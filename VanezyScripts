@@ -658,7 +658,7 @@ local function updateStatusBar()
             StatusToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             StatusToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -7), "Out", "Quad", 0.2, true)
         end
-    else
+        else
         MinLeftArrow.Visible = false
         MinRightArrow.Visible = false
         StatusToggleBg.Visible = false
