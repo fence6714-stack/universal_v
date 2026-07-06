@@ -1,6 +1,6 @@
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")  -- ← вместо CoreGui
+local CoreGui = game:GetService("CoreGui")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -26,9 +26,9 @@ fovCircle.Color = Color3.fromRGB(255, 0, 0)
 fovCircle.Filled = false
 
 local espCache = {}
-local aimLockTarget = nil  -- ← ПЕРЕНЕСЕНО
+local aimLockTarget = nil
 local lastShootTime = 0
-local isMinimized = false  -- ← ПЕРЕНЕСЕНО
+local isMinimized = false
 
 local function initDraw(player)
     if espCache[player] then return end
@@ -134,7 +134,7 @@ local function performShoot()
         end)
     else
         pcall(function()
-            if mouse1click then mouse1click() end  -- ← ИСПРАВЛЕНО
+            if mouse1click then mouse1click() end
         end)
     end
 end
