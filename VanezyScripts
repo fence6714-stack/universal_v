@@ -15,6 +15,9 @@ getgenv().FOVSize = 150
 getgenv().AimPart = "Head"
 getgenv().MaxDistance = 1000
 getgenv().AntiAFK = false
+getgenv().AutoShoot = false
+getgenv().AutoShootDelay = 0.15
+getgenv().AutoShootFOV = 80
 
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
@@ -55,29 +58,116 @@ end
 local function findBestTarget()
     local target, nearest = nil, getgenv().FOVSize
     local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    -- Если есть заблокированная цель - проверяем её
+    if aimLockTarget and aimLockTarget.Parent then
+        local humanoid = aimLockTarget.Parent:FindFirstChild("Humanoid")
+        if humanoid and humanoid.Health > 0 then
+            local screen, visible = Camera:WorldToViewportPoint(aimLockTarget.Position)
+            if visible then
+                local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
+                if dist < getgenv().FOVSize * 1.5 then
+                    return aimLockTarget
+                end
+            end
+        end
+    end
+    
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= Player and p.Character then
             local humanoid = p.Character:FindFirstChild("Humanoid")
-            local hitPart = p.Character:FindFirstChild(getgenv().AimPart)
-            if humanoid and hitPart and humanoid.Health > 0 then
-                -- ИСПРАВЛЕНИЕ: проверяем тиммейтов ДО вычислений
-                if isTeammate(p) then
-                    -- ПРОПУСКАЕМ тиммейтов
-                else
-                    local screen, visible = Camera:WorldToViewportPoint(hitPart.Position)
-                    if visible then
-                        local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
-                        if dist < nearest then
-                            nearest = dist
-                            target = hitPart
+            if humanoid and humanoid.Health > 0 then
+                if not isTeammate(p) then
+                    local parts = {"Head", "Torso", "HumanoidRootPart"}
+                    for _, partName in ipairs(parts) do
+                        local hitPart = p.Character:FindFirstChild(partName)
+                        if hitPart then
+                            local screen, visible = Camera:WorldToViewportPoint(hitPart.Position)
+                            if visible then
+                                local dist = (Vector2.new(screen.X, screen.Y) - mid).Magnitude
+                                local score = dist
+                                if partName == "Head" then
+                                    score = score * 0.7
+                                end
+                                if dist < 100 then
+                                    score = score * 0.5
+                                end
+                                if score < nearest then
+                                    nearest = score
+                                    target = hitPart
+                                end
+                            end
                         end
                     end
                 end
             end
         end
     end
+    
+    if target then
+        aimLockTarget = target
+    end
+    
     return target
 end
+
+local aimLockTarget = nil
+local lastShootTime = 0
+
+local function performShoot()
+    local tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
+    if not tool then return end
+    
+    if tool:FindFirstChild("RemoteFunction") then
+        pcall(function() tool.RemoteFunction:InvokeServer("Fire") end)
+    end
+    
+    pcall(function() tool:Activate() end)
+    
+    if UIS.TouchEnabled then
+        pcall(function()
+            local mouse = Player:GetMouse()
+            if mouse then
+                mouse.Button1Down:Fire()
+                task.wait(0.02)
+                mouse.Button1Up:Fire()
+            end
+        end)
+    else
+        pcall(function() mouse1click() end)
+    end
+end
+
+local function autoShoot()
+    if not getgenv().Aimbot then return end
+    if not getgenv().AutoShoot then return end
+    
+    local target = aimLockTarget
+    if not target then return end
+    if not target.Parent or not target.Parent:FindFirstChild("Humanoid") then return end
+    if target.Parent.Humanoid.Health <= 0 then return end
+    
+    local screenPos, onScreen = Camera:WorldToViewportPoint(target.Position)
+    if not onScreen then return end
+    
+    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local distToCenter = (Vector2.new(screenPos.X, screenPos.Y) - mid).Magnitude
+    
+    if distToCenter > getgenv().AutoShootFOV then return end
+    
+    local currentTime = tick()
+    if currentTime - lastShootTime < getgenv().AutoShootDelay then return end
+    
+    lastShootTime = currentTime
+    performShoot()
+end
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        pcall(autoShoot)
+    end
+end)
 
 local function cleanupESP()
     getgenv().ESPPlayers = false
@@ -763,6 +853,7 @@ MinRightArrow.MouseButton1Click:Connect(function()
     if getgenv().Aimbot then table.insert(activeFuncs, {name = "Aim", key = "Aimbot"}) end
     if getgenv().Tracers then table.insert(activeFuncs, {name = "Trace", key = "Tracers"}) end
     if getgenv().AntiAFK then table.insert(activeFuncs, {name = "AFK", key = "AntiAFK"}) end
+    if getgenv().AutoShoot then table.insert(activeFuncs, {name = "Shoot", key = "AutoShoot"}) end
     if #activeFuncs <= 1 then return end
     local idx = StatusBar:GetAttribute("CurrentIndex") or 1
     idx = idx + 1
@@ -1458,6 +1549,59 @@ tracersToggleBg.InputBegan:Connect(function(input)
     end
 end)
 
+local autoShootFrame = Instance.new("Frame")
+autoShootFrame.Size = UDim2.new(1, -16, 0, 42)
+autoShootFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+autoShootFrame.BackgroundTransparency = 0.6
+autoShootFrame.BorderSizePixel = 0
+autoShootFrame.Parent = mainContent
+Instance.new("UICorner", autoShootFrame).CornerRadius = UDim.new(0, 6)
+
+local autoShootLabel = Instance.new("TextLabel")
+autoShootLabel.Size = UDim2.new(0.5, 0, 1, 0)
+autoShootLabel.Position = UDim2.new(0, 28, 0, 0)
+autoShootLabel.BackgroundTransparency = 1
+autoShootLabel.Text = "Auto Shoot"
+autoShootLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoShootLabel.Font = Enum.Font.GothamBold
+autoShootLabel.TextSize = 13
+autoShootLabel.TextXAlignment = Enum.TextXAlignment.Left
+autoShootLabel.Parent = autoShootFrame
+
+createHelpButton(autoShootFrame, "Automatically shoots when target is in crosshair.")
+
+local autoShootToggleBg = Instance.new("Frame")
+autoShootToggleBg.Size = UDim2.new(0, 44, 0, 24)
+autoShootToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+autoShootToggleBg.BorderSizePixel = 0
+autoShootToggleBg.Parent = autoShootFrame
+Instance.new("UICorner", autoShootToggleBg).CornerRadius = UDim.new(1, 0)
+
+local autoShootToggleDot = Instance.new("Frame")
+autoShootToggleDot.Size = UDim2.new(0, 20, 0, 20)
+autoShootToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+autoShootToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+autoShootToggleDot.BorderSizePixel = 0
+autoShootToggleDot.Parent = autoShootToggleBg
+Instance.new("UICorner", autoShootToggleDot).CornerRadius = UDim.new(1, 0)
+
+autoShootToggleBg.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        getgenv().AutoShoot = not getgenv().AutoShoot
+        if getgenv().AutoShoot then
+            autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+            autoShootToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            createNotification("Auto Shoot", "✅ Auto Shoot enabled", 4)
+        else
+            autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            autoShootToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            createNotification("Auto Shoot", "❌ Auto Shoot disabled", 4)
+        end
+        updateStatusBar()
+    end
+end)
+
 local aimSpeedFrame = Instance.new("Frame")
 aimSpeedFrame.Size = UDim2.new(1, -16, 0, 46)
 aimSpeedFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
@@ -1477,11 +1621,26 @@ aimSpeedLabel.TextSize = 10
 aimSpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
 aimSpeedLabel.Parent = aimSpeedFrame
 
-createHelpButton(aimSpeedFrame, "How fast the aimbot locks onto targets. Lower = smoother, Higher = snappier.")
+local aimSpeedHelpBtn = Instance.new("TextButton")
+aimSpeedHelpBtn.Size = UDim2.new(0, 16, 0, 16)
+aimSpeedHelpBtn.Position = UDim2.new(0, 0, 0.2, -8)
+aimSpeedHelpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+aimSpeedHelpBtn.BorderSizePixel = 0
+aimSpeedHelpBtn.Text = "?"
+aimSpeedHelpBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+aimSpeedHelpBtn.Font = Enum.Font.GothamBold
+aimSpeedHelpBtn.TextSize = 10
+aimSpeedHelpBtn.ZIndex = 20
+aimSpeedHelpBtn.Parent = aimSpeedFrame
+Instance.new("UICorner", aimSpeedHelpBtn).CornerRadius = UDim.new(1, 0)
+
+aimSpeedHelpBtn.MouseButton1Click:Connect(function()
+    createNotification("Help", "How fast the aimbot locks onto targets. Lower = smoother, Higher = snappier.", 5)
+end)
 
 local aimSpeedSliderBg = Instance.new("Frame")
 aimSpeedSliderBg.Size = UDim2.new(1, -24, 0, 6)
-aimSpeedSliderBg.Position = UDim2.new(0, 12, 0, 26)
+aimSpeedSliderBg.Position = UDim2.new(0, 12, 0, 20)
 aimSpeedSliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 aimSpeedSliderBg.BorderSizePixel = 0
 aimSpeedSliderBg.Parent = aimSpeedFrame
@@ -1549,11 +1708,26 @@ fovLabel.TextSize = 10
 fovLabel.TextXAlignment = Enum.TextXAlignment.Left
 fovLabel.Parent = fovFrame
 
-createHelpButton(fovFrame, "Size of the aimbot field of view circle. Only targets inside this circle will be locked.")
+local fovHelpBtn = Instance.new("TextButton")
+fovHelpBtn.Size = UDim2.new(0, 16, 0, 16)
+fovHelpBtn.Position = UDim2.new(0, 0, 0.2, -8)
+fovHelpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+fovHelpBtn.BorderSizePixel = 0
+fovHelpBtn.Text = "?"
+fovHelpBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+fovHelpBtn.Font = Enum.Font.GothamBold
+fovHelpBtn.TextSize = 10
+fovHelpBtn.ZIndex = 20
+fovHelpBtn.Parent = fovFrame
+Instance.new("UICorner", fovHelpBtn).CornerRadius = UDim.new(1, 0)
+
+fovHelpBtn.MouseButton1Click:Connect(function()
+    createNotification("Help", "Size of the aimbot field of view circle. Only targets inside this circle will be locked.", 5)
+end)
 
 local fovSliderBg = Instance.new("Frame")
 fovSliderBg.Size = UDim2.new(1, -24, 0, 6)
-fovSliderBg.Position = UDim2.new(0, 12, 0, 26)
+fovSliderBg.Position = UDim2.new(0, 12, 0, 20)
 fovSliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 fovSliderBg.BorderSizePixel = 0
 fovSliderBg.Parent = fovFrame
