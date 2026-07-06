@@ -11,10 +11,10 @@ getgenv().ESPPlayers = false
 getgenv().ESPTeammates = false
 getgenv().Aimbot = false
 getgenv().Tracers = false
-getgenv().AimSpeed = 0.3
-getgenv().FOVSize = 150
+getgenv().AimSpeed = 0.5
+getgenv().FOVSize = 100
 getgenv().AimPart = "Head"
-getgenv().MaxDistance = 1000
+getgenv().MaxDistance = 400
 getgenv().AntiAFK = false
 getgenv().AutoShoot = false
 getgenv().AutoShootDelay = 0.15
@@ -27,6 +27,8 @@ getgenv().ESPWallCheck = false
 getgenv().Triggerbot = false
 getgenv().FlySpeed = 60
 getgenv().SpeedMultiplier = 2.5
+getgenv().GodMode = false
+getgenv().FullBright = false
 
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
@@ -394,31 +396,69 @@ local function disableTriggerbot()
     if triggerbotConn then triggerbotConn:Disconnect(); triggerbotConn = nil end
 end
 
-local renderConnection
-renderConnection = RunService.RenderStepped:Connect(function()
-    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-     if getgenv().Aimbot then
-     local target = findBestTarget()
-     if target then
-         -- Наводим камеру
-         Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, target.Position), getgenv().AimSpeed)
-        
-        -- СИНХРОНИЗАЦИЯ МЫШИ (ЭТО ВСТАВЬ!)
-        pcall(function()
-            local ray = Camera:ViewportPointToRay(
-                Camera.ViewportSize.X / 2,
-                Camera.ViewportSize.Y / 2
-            )
-            local hit, pos = workspace:Raycast(ray.Origin, ray.Direction * 1000)
-            if hit then
-                Mouse.Hit = CFrame.new(pos)
-                Mouse.UnitRay = ray
-            end
-        end)
+local function enableGodMode()
+    local hum = getHum()
+    if hum then
+        hum.MaxHealth = 99999
+        hum.Health = 99999
     end
 end
+
+local function disableGodMode()
+    local hum = getHum()
+    if hum then
+        hum.MaxHealth = 100
+        hum.Health = 100
+    end
+end
+
+local function enableFullBright()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.Plastic
+            v.BrickColor = BrickColor.new("White")
+        end
+    end
+    game.Lighting.Brightness = 2
+    game.Lighting.ClockTime = 12
+    game.Lighting.FogEnd = 100000
+    game.Lighting.GlobalShadows = false
+    game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+end
+
+local function disableFullBright()
+    game.Lighting.Brightness = 0.5
+    game.Lighting.ClockTime = 0
+    game.Lighting.FogEnd = 1000
+    game.Lighting.GlobalShadows = true
+    game.Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    game.Lighting.Ambient = Color3.fromRGB(128, 128, 128)
+end
+
+local renderConnection
+renderConnection = RunService.RenderStepped:Connect(function()
+    cache.frameSkip = cache.frameSkip + 1
+    if cache.frameSkip % 2 == 0 then return end
     
-    -- Fly управление
+    if not getgenv().ESPPlayers and not getgenv().Aimbot and not getgenv().Tracers and not getgenv().Fly and not getgenv().Noclip then
+        return
+    end
+    
+    updateCache()
+    local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    fovCircle.Position = mid
+    fovCircle.Radius = getgenv().FOVSize
+    fovCircle.Visible = getgenv().Aimbot
+    
+    if getgenv().Aimbot then
+        local target = findBestTarget()
+        if target then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, target.Position), getgenv().AimSpeed)
+        end
+    end
+    
     if getgenv().Fly and flyBodyVelocity then
         local move = Vector3.new()
         if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0, 0, -getgenv().FlySpeed) end
@@ -430,7 +470,6 @@ end
         flyBodyVelocity.Velocity = Camera.CFrame:VectorToWorldSpace(move)
     end
     
-    -- Speed Boost
     if getgenv().SpeedBoost then
         local hum = getHum()
         if hum then hum.WalkSpeed = defaultWalkSpeed * getgenv().SpeedMultiplier end
@@ -441,7 +480,14 @@ end
         end
     end
     
-    -- Noclip
+    if getgenv().GodMode then
+        local hum = getHum()
+        if hum then
+            if hum.MaxHealth < 99999 then hum.MaxHealth = 99999 end
+            if hum.Health < hum.MaxHealth then hum.Health = hum.MaxHealth end
+        end
+    end
+    
     if getgenv().Noclip then
         local c = getChar()
         if c then
@@ -451,49 +497,44 @@ end
         end
     end
     
-    fovCircle.Position = mid
-    fovCircle.Radius = getgenv().FOVSize
-    fovCircle.Visible = getgenv().Aimbot
-    if getgenv().Aimbot then
-        local target = findBestTarget()
-        if target then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, target.Position), getgenv().AimSpeed)
-        end
-    end
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= Player then
-            local char = p.Character
-            if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-                local isTeam = isTeammate(p)
-                if not getgenv().ESPTeammates and isTeam then
-                    if espCache[p] then
-                        espCache[p].line.Visible = false
-                        espCache[p].box.Visible = false
+    if getgenv().ESPPlayers or getgenv().Tracers then
+        local players = cache.players
+        for i = 1, #players do
+            local p = players[i]
+            if p ~= Player then
+                local char = p.Character
+                if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                    local isTeam = isTeammate(p)
+                    if not getgenv().ESPTeammates and isTeam then
+                        if espCache[p] then
+                            espCache[p].line.Visible = false
+                            espCache[p].box.Visible = false
+                        end
+                        continue
                     end
-                    continue
+                    initDraw(p)
+                    local data = espCache[p]
+                    local root = char.HumanoidRootPart
+                    local screenPos, onScreen = getScreenData(root.Position)
+                    local distance = (cache.cameraPos - root.Position).Magnitude
+                    local color = isTeam and Color3.fromHSV(0.55, 1, 1) or Color3.fromHSV(math.clamp(distance / getgenv().MaxDistance, 0, 0.33), 1, 1)
+                    data.line.From = mid
+                    data.line.To = screenPos
+                    data.line.Color = color
+                    data.line.Visible = getgenv().Tracers
+                    if (getgenv().ESPPlayers or (getgenv().ESPTeammates and isTeam)) and onScreen then
+                        local size = math.clamp(2500 / distance, 5, 300)
+                        data.box.Size = Vector2.new(size, size * 1.5)
+                        data.box.Position = Vector2.new(screenPos.X - size / 2, screenPos.Y - size * 0.75)
+                        data.box.Color = color
+                        data.box.Visible = true
+                    else
+                        data.box.Visible = false
+                    end
+                elseif espCache[p] then
+                    espCache[p].line.Visible = false
+                    espCache[p].box.Visible = false
                 end
-                initDraw(p)
-                local data = espCache[p]
-                local root = char.HumanoidRootPart
-                local screenPos, onScreen = getScreenData(root.Position)
-                local distance = (Camera.CFrame.Position - root.Position).Magnitude
-                local color = isTeam and Color3.fromHSV(0.55, 1, 1) or Color3.fromHSV(math.clamp(distance / getgenv().MaxDistance, 0, 0.33), 1, 1)
-                data.line.From = mid
-                data.line.To = screenPos
-                data.line.Color = color
-                data.line.Visible = getgenv().Tracers
-                if (getgenv().ESPPlayers or (getgenv().ESPTeammates and isTeam)) and onScreen then
-                    local size = math.clamp(2500 / distance, 5, 300)
-                    data.box.Size = Vector2.new(size, size * 1.5)
-                    data.box.Position = Vector2.new(screenPos.X - size / 2, screenPos.Y - size * 0.75)
-                    data.box.Color = color
-                    data.box.Visible = true
-                else
-                    data.box.Visible = false
-                end
-            elseif espCache[p] then
-                espCache[p].line.Visible = false
-                espCache[p].box.Visible = false
             end
         end
     end
@@ -1068,6 +1109,8 @@ local function updateStatusBar()
     if getgenv().InfiniteJump then table.insert(activeFuncs, {name = "Jump", key = "InfiniteJump"}) end
     if getgenv().Triggerbot then table.insert(activeFuncs, {name = "Trigger", key = "Triggerbot"}) end
     if getgenv().ESPWallCheck then table.insert(activeFuncs, {name = "WallCheck", key = "ESPWallCheck"}) end
+    if getgenv().GodMode then table.insert(activeFuncs, {name = "God", key = "GodMode"}) end
+if getgenv().FullBright then table.insert(activeFuncs, {name = "Bright", key = "FullBright"}) end
     
     if #activeFuncs == 0 then
         StatusText.Text = "No functions active"
@@ -2603,6 +2646,130 @@ jumpToggleBg.InputBegan:Connect(function(input)
             jumpToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             jumpToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Infinite Jump", "❌ Disabled", 4)
+        end
+        updateStatusBar()
+    end
+end)
+
+-- God Mode
+local godFrame = Instance.new("Frame")
+godFrame.Size = UDim2.new(1, -16, 0, 42)
+godFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+godFrame.BackgroundTransparency = 0.6
+godFrame.BorderSizePixel = 0
+godFrame.Parent = SettingsContent
+Instance.new("UICorner", godFrame).CornerRadius = UDim.new(0, 6)
+
+local godLabel = Instance.new("TextLabel")
+godLabel.Size = UDim2.new(0.5, 0, 1, 0)
+godLabel.Position = UDim2.new(0, 28, 0, 0)
+godLabel.BackgroundTransparency = 1
+godLabel.Text = "God Mode"
+godLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+godLabel.Font = Enum.Font.GothamBold
+godLabel.TextSize = 13
+godLabel.TextXAlignment = Enum.TextXAlignment.Left
+godLabel.Parent = godFrame
+
+local godGradient = Instance.new("UIGradient", godLabel)
+godGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
+createHelpButton(godFrame, "Makes you invincible. Health restores every frame.")
+
+local godToggleBg = Instance.new("Frame")
+godToggleBg.Size = UDim2.new(0, 38, 0, 20)
+godToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
+godToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+godToggleBg.BorderSizePixel = 0
+godToggleBg.Parent = godFrame
+Instance.new("UICorner", godToggleBg).CornerRadius = UDim.new(1, 0)
+
+local godToggleDot = Instance.new("Frame")
+godToggleDot.Size = UDim2.new(0, 16, 0, 16)
+godToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
+godToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+godToggleDot.BorderSizePixel = 0
+godToggleDot.Parent = godToggleBg
+Instance.new("UICorner", godToggleDot).CornerRadius = UDim.new(1, 0)
+
+godToggleBg.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        getgenv().GodMode = not getgenv().GodMode
+        if getgenv().GodMode then
+            godToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            godToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
+            enableGodMode()
+            createNotification("God Mode", "✅ Enabled", 4)
+        else
+            godToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            godToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
+            disableGodMode()
+            createNotification("God Mode", "❌ Disabled", 4)
+        end
+        updateStatusBar()
+    end
+end)
+
+-- Full Bright
+local brightFrame = Instance.new("Frame")
+brightFrame.Size = UDim2.new(1, -16, 0, 42)
+brightFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+brightFrame.BackgroundTransparency = 0.6
+brightFrame.BorderSizePixel = 0
+brightFrame.Parent = SettingsContent
+Instance.new("UICorner", brightFrame).CornerRadius = UDim.new(0, 6)
+
+local brightLabel = Instance.new("TextLabel")
+brightLabel.Size = UDim2.new(0.5, 0, 1, 0)
+brightLabel.Position = UDim2.new(0, 28, 0, 0)
+brightLabel.BackgroundTransparency = 1
+brightLabel.Text = "Full Bright"
+brightLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+brightLabel.Font = Enum.Font.GothamBold
+brightLabel.TextSize = 13
+brightLabel.TextXAlignment = Enum.TextXAlignment.Left
+brightLabel.Parent = brightFrame
+
+local brightGradient = Instance.new("UIGradient", brightLabel)
+brightGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
+createHelpButton(brightFrame, "Makes the game bright like daytime. Works in dark maps.")
+
+local brightToggleBg = Instance.new("Frame")
+brightToggleBg.Size = UDim2.new(0, 38, 0, 20)
+brightToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
+brightToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+brightToggleBg.BorderSizePixel = 0
+brightToggleBg.Parent = brightFrame
+Instance.new("UICorner", brightToggleBg).CornerRadius = UDim.new(1, 0)
+
+local brightToggleDot = Instance.new("Frame")
+brightToggleDot.Size = UDim2.new(0, 16, 0, 16)
+brightToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
+brightToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+brightToggleDot.BorderSizePixel = 0
+brightToggleDot.Parent = brightToggleBg
+Instance.new("UICorner", brightToggleDot).CornerRadius = UDim.new(1, 0)
+
+brightToggleBg.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        getgenv().FullBright = not getgenv().FullBright
+        if getgenv().FullBright then
+            brightToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            brightToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
+            enableFullBright()
+            createNotification("Full Bright", "✅ Enabled", 4)
+        else
+            brightToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            brightToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
+            disableFullBright()
+            createNotification("Full Bright", "❌ Disabled", 4)
         end
         updateStatusBar()
     end
