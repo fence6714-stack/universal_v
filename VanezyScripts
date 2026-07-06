@@ -207,7 +207,7 @@ local function removeNotification(nf, customButtons)
 end
 
 function createNotification(title, message, duration, customButtons)
-    duration = duration or 5
+    duration = duration or 3
     while #activeNotifications >= 5 do
         local oldest = table.remove(activeNotifications, 1)
         if oldest and oldest.Parent then oldest:Destroy() end
@@ -281,7 +281,7 @@ function createNotification(title, message, duration, customButtons)
     timeLine.BorderSizePixel = 0
     timeLine.ZIndex = 10
     timeLine.Parent = nf
-    local yPos = -15 + (#activeNotifications * (customButtons and 100 or 72))
+    local yPos = -5 + (#activeNotifications * (customButtons and 100 or 72))
     TweenService:Create(nf, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, -135, 0, yPos)
     }):Play()
@@ -411,29 +411,25 @@ backgroundEffect.Parent = MainFrame
 Instance.new("UICorner", backgroundEffect).CornerRadius = UDim.new(0, 14)
 
 local smokeGradient = Instance.new("UIGradient", backgroundEffect)
-smokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(80, 0, 0)),
-    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(120, 20, 0)),
-    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(40, 0, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
-})
 smokeGradient.Rotation = 45
 
-local smoke2 = Instance.new("Frame")
-smoke2.Size = UDim2.new(1, 0, 1, 0)
-smoke2.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-smoke2.BackgroundTransparency = 0.4
-smoke2.BorderSizePixel = 0
-smoke2.Parent = MainFrame
-Instance.new("UICorner", smoke2).CornerRadius = UDim.new(0, 14)
-local smokeGrad2 = Instance.new("UIGradient", smoke2)
-smokeGrad2.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 10, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
-})
-smokeGrad2.Rotation = -30
+local smokeOffset = 0
+local smokeDir = 1
+task.spawn(function()
+    while backgroundEffect and backgroundEffect.Parent do
+        smokeOffset = smokeOffset + 0.003 * smokeDir
+        if smokeOffset >= 0.5 then smokeDir = -1
+        elseif smokeOffset <= -0.5 then smokeDir = 1 end
+        smokeGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+            ColorSequenceKeypoint.new(math.clamp(0.3 + smokeOffset, 0, 1), Color3.fromRGB(80, 0, 0)),
+            ColorSequenceKeypoint.new(math.clamp(0.6 + smokeOffset, 0, 1), Color3.fromRGB(120, 20, 0)),
+            ColorSequenceKeypoint.new(math.clamp(0.8 + smokeOffset, 0, 1), Color3.fromRGB(40, 0, 0)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+        })
+        task.wait(0.05)
+    end
+end)
 
 MainFrame.BackgroundTransparency = 1
 MainFrame.Size = UDim2.new(0, GUI_WIDTH, 0, 0)
@@ -524,14 +520,15 @@ Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 local MinBtn = Instance.new("TextButton")
 MinBtn.Size = UDim2.new(0, 26, 0, 26)
 MinBtn.Position = UDim2.new(1, -60, 0, 4)
-MinBtn.BackgroundColor3 = Color3.fromRGB(255, 160, 30)
+MinBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MinBtn.BackgroundTransparency = 0.92
 MinBtn.BorderSizePixel = 0
 MinBtn.Text = "—"
 MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.Font = Enum.Font.GothamBlack
 MinBtn.TextSize = 16
 MinBtn.Parent = Header
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
 
 local StatusBar = Instance.new("Frame")
 StatusBar.Size = UDim2.new(0, 0, 0, 26)
@@ -592,34 +589,87 @@ rightArrow.TextSize = 10
 rightArrow.Visible = false
 rightArrow.Parent = StatusBar
 
+local MinLeftArrow = Instance.new("TextButton")
+MinLeftArrow.Size = UDim2.new(0, 18, 0, 18)
+MinLeftArrow.Position = UDim2.new(0.5, -108, 0, 8)
+MinLeftArrow.BackgroundTransparency = 1
+MinLeftArrow.Text = "◀"
+MinLeftArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
+MinLeftArrow.Font = Enum.Font.GothamBold
+MinLeftArrow.TextSize = 11
+MinLeftArrow.Visible = false
+MinLeftArrow.Parent = Header
+
+local MinRightArrow = Instance.new("TextButton")
+MinRightArrow.Size = UDim2.new(0, 18, 0, 18)
+MinRightArrow.Position = UDim2.new(0.5, 90, 0, 8)
+MinRightArrow.BackgroundTransparency = 1
+MinRightArrow.Text = "▶"
+MinRightArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
+MinRightArrow.Font = Enum.Font.GothamBold
+MinRightArrow.TextSize = 11
+MinRightArrow.Visible = false
+MinRightArrow.Parent = Header
+
 local function updateStatusBar()
     local activeFuncs = {}
-    if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
-    if getgenv().ESPTeammates then table.insert(activeFuncs, "ESP Team") end
-    if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
-    if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
-    if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
+    if getgenv().ESPPlayers then table.insert(activeFuncs, {name = "ESP", key = "ESPPlayers"}) end
+    if getgenv().ESPTeammates then table.insert(activeFuncs, {name = "ESP Team", key = "ESPTeammates"}) end
+    if getgenv().Aimbot then table.insert(activeFuncs, {name = "Aim", key = "Aimbot"}) end
+    if getgenv().Tracers then table.insert(activeFuncs, {name = "Trace", key = "Tracers"}) end
+    if getgenv().AntiAFK then table.insert(activeFuncs, {name = "AFK", key = "AntiAFK"}) end
+    
     if #activeFuncs == 0 then
         StatusText.Text = "No functions active"
         leftArrow.Visible = false
         rightArrow.Visible = false
+        MinLeftArrow.Visible = false
+        MinRightArrow.Visible = false
+        StatusToggleBg.Visible = false
         return
     end
+    
     local currentIndex = tonumber(StatusBar:GetAttribute("CurrentIndex")) or 1
     if currentIndex > #activeFuncs then currentIndex = 1 end
     if currentIndex < 1 then currentIndex = 1 end
-    StatusText.Text = activeFuncs[currentIndex]
+    
+    StatusText.Text = activeFuncs[currentIndex].name
     StatusBar:SetAttribute("CurrentIndex", currentIndex)
-    if #activeFuncs <= 1 then
-        leftArrow.Visible = true
-        rightArrow.Visible = true
-        leftArrow.TextColor3 = Color3.fromRGB(80, 80, 80)
-        rightArrow.TextColor3 = Color3.fromRGB(80, 80, 80)
+    StatusBar:SetAttribute("CurrentKey", activeFuncs[currentIndex].key)
+    
+    if isMinimized then
+        leftArrow.Visible = false
+        rightArrow.Visible = false
+        MinLeftArrow.Visible = true
+        MinRightArrow.Visible = true
+        StatusToggleBg.Visible = true
+        
+        if #activeFuncs <= 1 then
+            MinLeftArrow.TextColor3 = Color3.fromRGB(80, 80, 80)
+            MinRightArrow.TextColor3 = Color3.fromRGB(80, 80, 80)
+        else
+            MinLeftArrow.TextColor3 = (currentIndex > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
+            MinRightArrow.TextColor3 = (currentIndex < #activeFuncs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
+        end
+        
+        local key = activeFuncs[currentIndex].key
+        if getgenv()[key] then
+            StatusToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+            StatusToggleDot:TweenPosition(UDim2.new(1, -16, 0.5, -7), "Out", "Quad", 0.2, true)
+        else
+            StatusToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            StatusToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -7), "Out", "Quad", 0.2, true)
+        end
     else
-        leftArrow.Visible = true
-        rightArrow.Visible = true
-        leftArrow.TextColor3 = (currentIndex > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-        rightArrow.TextColor3 = (currentIndex < #activeFuncs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
+        MinLeftArrow.Visible = false
+        MinRightArrow.Visible = false
+        StatusToggleBg.Visible = false
+        leftArrow.Visible = (#activeFuncs > 1)
+        rightArrow.Visible = (#activeFuncs > 1)
+        if #activeFuncs > 1 then
+            leftArrow.TextColor3 = (currentIndex > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
+            rightArrow.TextColor3 = (currentIndex < #activeFuncs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
+        end
     end
 end
 
@@ -652,6 +702,69 @@ rightArrow.MouseButton1Click:Connect(function()
     if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
     if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
     if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
+    if #activeFuncs <= 1 then return end
+    local idx = StatusBar:GetAttribute("CurrentIndex") or 1
+    idx = idx + 1
+    if idx > #activeFuncs then idx = 1 end
+    StatusBar:SetAttribute("CurrentIndex", idx)
+    TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, -4, 0, 0)
+    }):Play()
+    task.wait(0.1)
+    updateStatusBar()
+    TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 8, 0, 0)
+    }):Play()
+end)
+
+StatusToggleBg.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if not isMinimized then return end
+        local key = StatusBar:GetAttribute("CurrentKey")
+        if not key then return end
+        getgenv()[key] = not getgenv()[key]
+        local status = getgenv()[key]
+        local funcName = StatusText.Text
+        if status then
+            createNotification(funcName, "✅ " .. funcName .. " enabled", 4)
+        else
+            createNotification(funcName, "❌ " .. funcName .. " disabled", 4)
+        end
+        updateStatusBar()
+    end
+end)
+
+MinLeftArrow.MouseButton1Click:Connect(function()
+    if not isMinimized then return end
+    local activeFuncs = {}
+    if getgenv().ESPPlayers then table.insert(activeFuncs, {name = "ESP", key = "ESPPlayers"}) end
+    if getgenv().ESPTeammates then table.insert(activeFuncs, {name = "ESP Team", key = "ESPTeammates"}) end
+    if getgenv().Aimbot then table.insert(activeFuncs, {name = "Aim", key = "Aimbot"}) end
+    if getgenv().Tracers then table.insert(activeFuncs, {name = "Trace", key = "Tracers"}) end
+    if getgenv().AntiAFK then table.insert(activeFuncs, {name = "AFK", key = "AntiAFK"}) end
+    if #activeFuncs <= 1 then return end
+    local idx = StatusBar:GetAttribute("CurrentIndex") or 1
+    idx = idx - 1
+    if idx < 1 then idx = #activeFuncs end
+    StatusBar:SetAttribute("CurrentIndex", idx)
+    TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 20, 0, 0)
+    }):Play()
+    task.wait(0.1)
+    updateStatusBar()
+    TweenService:Create(StatusText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 8, 0, 0)
+    }):Play()
+end)
+
+MinRightArrow.MouseButton1Click:Connect(function()
+    if not isMinimized then return end
+    local activeFuncs = {}
+    if getgenv().ESPPlayers then table.insert(activeFuncs, {name = "ESP", key = "ESPPlayers"}) end
+    if getgenv().ESPTeammates then table.insert(activeFuncs, {name = "ESP Team", key = "ESPTeammates"}) end
+    if getgenv().Aimbot then table.insert(activeFuncs, {name = "Aim", key = "Aimbot"}) end
+    if getgenv().Tracers then table.insert(activeFuncs, {name = "Trace", key = "Tracers"}) end
+    if getgenv().AntiAFK then table.insert(activeFuncs, {name = "AFK", key = "AntiAFK"}) end
     if #activeFuncs <= 1 then return end
     local idx = StatusBar:GetAttribute("CurrentIndex") or 1
     idx = idx + 1
@@ -700,7 +813,7 @@ local ContentPanel = Instance.new("Frame")
 ContentPanel.Size = UDim2.new(1, -SIDEBAR_WIDTH, 1, -48)
 ContentPanel.Position = UDim2.new(0, SIDEBAR_WIDTH, 0, 48)
 ContentPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ContentPanel.BackgroundTransparency = 0.85
+ContentPanel.BackgroundTransparency = 0.95
 ContentPanel.BorderSizePixel = 0
 ContentPanel.ClipsDescendants = true
 ContentPanel.Parent = MainFrame
@@ -1641,8 +1754,11 @@ MinBtn.MouseButton1Click:Connect(function()
         ContentPanel.Visible = false
         CollapseBtn.Visible = false
         StatusBar:TweenSize(UDim2.new(0, 175, 0, 26), "Out", "Quad", 0.25, true)
-        StatusBar.Position = UDim2.new(1, -240, 0, 4)
+        StatusBar.Position = UDim2.new(0.5, -87, 0, 4)
         StatusBar.BackgroundTransparency = 0
+        MinLeftArrow.Visible = true
+        MinRightArrow.Visible = true
+        StatusToggleBg.Visible = true
         updateStatusBar()
     else
         MainFrame:TweenSize(UDim2.new(0, GUI_WIDTH, 0, GUI_HEIGHT), "Out", "Quad", 0.25, true)
@@ -1651,6 +1767,9 @@ MinBtn.MouseButton1Click:Connect(function()
         CollapseBtn.Visible = true
         StatusBar:TweenSize(UDim2.new(0, 0, 0, 26), "Out", "Quad", 0.2, true)
         StatusBar.BackgroundTransparency = 1
+        MinLeftArrow.Visible = false
+        MinRightArrow.Visible = false
+        StatusToggleBg.Visible = false
         leftArrow.Visible = false
         rightArrow.Visible = false
     end
