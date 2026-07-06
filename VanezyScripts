@@ -518,30 +518,78 @@ WelcomeGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 WelcomeGui.DisplayOrder = 1000
 WelcomeGui.Parent = CoreGui
 
+local WelcomeFrame = Instance.new("Frame")
+WelcomeFrame.Size = UDim2.new(1, 0, 1, 0)
+WelcomeFrame.BackgroundTransparency = 1
+WelcomeFrame.Parent = WelcomeGui
+
 local WelcomeText = Instance.new("TextLabel")
-WelcomeText.Size = UDim2.new(0, 400, 0, 60)
-WelcomeText.Position = UDim2.new(0.5, -200, 0.5, -30)
+WelcomeText.Size = UDim2.new(0, 500, 0, 80)
+WelcomeText.Position = UDim2.new(0.5, -250, 0.5, -40)
 WelcomeText.BackgroundTransparency = 1
-WelcomeText.Text = "Welcome〔V〕hub"
-WelcomeText.TextColor3 = Color3.fromRGB(255, 80, 80)
+WelcomeText.Text = "Welcome 〔V〕Hub v1"
+WelcomeText.TextColor3 = Color3.fromRGB(255, 255, 255)
 WelcomeText.Font = Enum.Font.GothamBlack
-WelcomeText.TextSize = 28
+WelcomeText.TextSize = 36
 WelcomeText.TextTransparency = 1
-WelcomeText.Parent = WelcomeGui
+WelcomeText.ZIndex = 2
+WelcomeText.Parent = WelcomeFrame
+
+local welcomeGradient = Instance.new("UIGradient", WelcomeText)
+welcomeGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 80, 80)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 100, 255)),
+    ColorSequenceKeypoint.new(0.7, Color3.fromRGB(255, 80, 80)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+})
+welcomeGradient.Rotation = 0
+welcomeGradient.Enabled = false
+
+local glow = Instance.new("Frame")
+glow.Size = UDim2.new(0.1, 0, 1, 0)
+glow.Position = UDim2.new(-0.1, 0, 0, 0)
+glow.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
+glow.BackgroundTransparency = 0.6
+glow.BorderSizePixel = 0
+glow.ZIndex = 3
+glow.Parent = WelcomeFrame
+Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
+
+local glowGradient = Instance.new("UIGradient", glow)
+glowGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 180, 255)),
+    ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.7, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 180, 255))
+})
+glowGradient.Rotation = 90
 
 task.spawn(function()
     TweenService:Create(WelcomeText, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         TextTransparency = 0
     }):Play()
+    
     task.wait(2.5)
-    TweenService:Create(WelcomeText, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+    
+    welcomeGradient.Enabled = true
+    
+    TweenService:Create(glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+        Position = UDim2.new(1.1, 0, 0, 0)
+    }):Play()
+    
+    task.wait(1)
+    
+    TweenService:Create(WelcomeText, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         TextTransparency = 1
     }):Play()
-    task.wait(2.5)
+    TweenService:Create(glow, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    task.wait(2)
     WelcomeGui:Destroy()
 end)
-
-task.wait(2.5)
 
 local NotifGui = Instance.new("ScreenGui")
 NotifGui.Name = "VanezyNotif"
@@ -1634,19 +1682,25 @@ espLabel.TextSize = 13
 espLabel.TextXAlignment = Enum.TextXAlignment.Left
 espLabel.Parent = espFrame
 
+local espGradient = Instance.new("UIGradient", espLabel)
+espGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(espFrame, "Highlights all players through walls with boxes. Toggle ON/OFF.")
 
 local espToggleBg = Instance.new("Frame")
-espToggleBg.Size = UDim2.new(0, 44, 0, 24)
-espToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+espToggleBg.Size = UDim2.new(0, 38, 0, 20)
+espToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 espToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 espToggleBg.BorderSizePixel = 0
 espToggleBg.Parent = espFrame
 Instance.new("UICorner", espToggleBg).CornerRadius = UDim.new(1, 0)
 
 local espToggleDot = Instance.new("Frame")
-espToggleDot.Size = UDim2.new(0, 20, 0, 20)
-espToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+espToggleDot.Size = UDim2.new(0, 16, 0, 16)
+espToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 espToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 espToggleDot.BorderSizePixel = 0
 espToggleDot.Parent = espToggleBg
@@ -1656,12 +1710,12 @@ espToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().ESPPlayers = not getgenv().ESPPlayers
         if getgenv().ESPPlayers then
-            espToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            espToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            espToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            espToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("ESP", "✅ ESP Players enabled", 4)
         else
             espToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            espToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            espToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("ESP", "❌ ESP Players disabled", 4)
         end
         updateStatusBar()
@@ -1687,19 +1741,25 @@ espTeamLabel.TextSize = 13
 espTeamLabel.TextXAlignment = Enum.TextXAlignment.Left
 espTeamLabel.Parent = espTeamFrame
 
+local espTeamGradient = Instance.new("UIGradient", espTeamLabel)
+espTeamGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(espTeamFrame, "Shows ESP on your teammates. Toggle ON/OFF.")
 
 local espTeamToggleBg = Instance.new("Frame")
-espTeamToggleBg.Size = UDim2.new(0, 44, 0, 24)
-espTeamToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+espTeamToggleBg.Size = UDim2.new(0, 38, 0, 20)
+espTeamToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 espTeamToggleBg.BorderSizePixel = 0
 espTeamToggleBg.Parent = espTeamFrame
 Instance.new("UICorner", espTeamToggleBg).CornerRadius = UDim.new(1, 0)
 
 local espTeamToggleDot = Instance.new("Frame")
-espTeamToggleDot.Size = UDim2.new(0, 20, 0, 20)
-espTeamToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+espTeamToggleDot.Size = UDim2.new(0, 16, 0, 16)
+espTeamToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 espTeamToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 espTeamToggleDot.BorderSizePixel = 0
 espTeamToggleDot.Parent = espTeamToggleBg
@@ -1709,12 +1769,12 @@ espTeamToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().ESPTeammates = not getgenv().ESPTeammates
         if getgenv().ESPTeammates then
-            espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            espTeamToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            espTeamToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("ESP Teammates", "✅ ESP Teammates enabled", 4)
         else
             espTeamToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            espTeamToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            espTeamToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("ESP Teammates", "❌ ESP Teammates disabled", 4)
         end
         updateStatusBar()
@@ -1740,19 +1800,25 @@ aimLabel.TextSize = 13
 aimLabel.TextXAlignment = Enum.TextXAlignment.Left
 aimLabel.Parent = aimFrame
 
+local aimGradient = Instance.new("UIGradient", aimLabel)
+aimGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(aimFrame, "Automatically aims at the nearest player. Adjust speed and FOV below.")
 
 local aimToggleBg = Instance.new("Frame")
-aimToggleBg.Size = UDim2.new(0, 44, 0, 24)
-aimToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+aimToggleBg.Size = UDim2.new(0, 38, 0, 20)
+aimToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 aimToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 aimToggleBg.BorderSizePixel = 0
 aimToggleBg.Parent = aimFrame
 Instance.new("UICorner", aimToggleBg).CornerRadius = UDim.new(1, 0)
 
 local aimToggleDot = Instance.new("Frame")
-aimToggleDot.Size = UDim2.new(0, 20, 0, 20)
-aimToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+aimToggleDot.Size = UDim2.new(0, 16, 0, 16)
+aimToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 aimToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 aimToggleDot.BorderSizePixel = 0
 aimToggleDot.Parent = aimToggleBg
@@ -1762,12 +1828,12 @@ aimToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().Aimbot = not getgenv().Aimbot
         if getgenv().Aimbot then
-            aimToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            aimToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            aimToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            aimToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Aimbot", "✅ Aimbot enabled", 4)
         else
             aimToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            aimToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            aimToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Aimbot", "❌ Aimbot disabled", 4)
         end
         updateStatusBar()
@@ -1793,19 +1859,25 @@ tracersLabel.TextSize = 13
 tracersLabel.TextXAlignment = Enum.TextXAlignment.Left
 tracersLabel.Parent = tracersFrame
 
+local tracersGradient = Instance.new("UIGradient", tracersLabel)
+tracersGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(tracersFrame, "Draws lines from your crosshair to all players. Toggle ON/OFF.")
 
 local tracersToggleBg = Instance.new("Frame")
-tracersToggleBg.Size = UDim2.new(0, 44, 0, 24)
-tracersToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+tracersToggleBg.Size = UDim2.new(0, 38, 0, 20)
+tracersToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 tracersToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 tracersToggleBg.BorderSizePixel = 0
 tracersToggleBg.Parent = tracersFrame
 Instance.new("UICorner", tracersToggleBg).CornerRadius = UDim.new(1, 0)
 
 local tracersToggleDot = Instance.new("Frame")
-tracersToggleDot.Size = UDim2.new(0, 20, 0, 20)
-tracersToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+tracersToggleDot.Size = UDim2.new(0, 16, 0, 16)
+tracersToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 tracersToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 tracersToggleDot.BorderSizePixel = 0
 tracersToggleDot.Parent = tracersToggleBg
@@ -1815,12 +1887,12 @@ tracersToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().Tracers = not getgenv().Tracers
         if getgenv().Tracers then
-            tracersToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            tracersToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            tracersToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            tracersToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Tracers", "✅ Tracers enabled", 4)
         else
             tracersToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            tracersToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            tracersToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Tracers", "❌ Tracers disabled", 4)
         end
         updateStatusBar()
@@ -1846,19 +1918,25 @@ autoShootLabel.TextSize = 13
 autoShootLabel.TextXAlignment = Enum.TextXAlignment.Left
 autoShootLabel.Parent = autoShootFrame
 
+local autoShootGradient = Instance.new("UIGradient", autoShootLabel)
+autoShootGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(autoShootFrame, "Automatically shoots when target is in crosshair.")
 
 local autoShootToggleBg = Instance.new("Frame")
-autoShootToggleBg.Size = UDim2.new(0, 44, 0, 24)
-autoShootToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+autoShootToggleBg.Size = UDim2.new(0, 38, 0, 20)
+autoShootToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 autoShootToggleBg.BorderSizePixel = 0
 autoShootToggleBg.Parent = autoShootFrame
 Instance.new("UICorner", autoShootToggleBg).CornerRadius = UDim.new(1, 0)
 
 local autoShootToggleDot = Instance.new("Frame")
-autoShootToggleDot.Size = UDim2.new(0, 20, 0, 20)
-autoShootToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+autoShootToggleDot.Size = UDim2.new(0, 16, 0, 16)
+autoShootToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 autoShootToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 autoShootToggleDot.BorderSizePixel = 0
 autoShootToggleDot.Parent = autoShootToggleBg
@@ -1868,12 +1946,12 @@ autoShootToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().AutoShoot = not getgenv().AutoShoot
         if getgenv().AutoShoot then
-            autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            autoShootToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            autoShootToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Auto Shoot", "✅ Auto Shoot enabled", 4)
         else
             autoShootToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            autoShootToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            autoShootToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Auto Shoot", "❌ Auto Shoot disabled", 4)
         end
         updateStatusBar()
@@ -1899,19 +1977,25 @@ triggerLabel.TextSize = 13
 triggerLabel.TextXAlignment = Enum.TextXAlignment.Left
 triggerLabel.Parent = triggerFrame
 
+local triggerGradient = Instance.new("UIGradient", triggerLabel)
+triggerGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(triggerFrame, "Auto-fires when crosshair is on enemy.")
 
 local triggerToggleBg = Instance.new("Frame")
-triggerToggleBg.Size = UDim2.new(0, 44, 0, 24)
-triggerToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+triggerToggleBg.Size = UDim2.new(0, 38, 0, 20)
+triggerToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 triggerToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 triggerToggleBg.BorderSizePixel = 0
 triggerToggleBg.Parent = triggerFrame
 Instance.new("UICorner", triggerToggleBg).CornerRadius = UDim.new(1, 0)
 
 local triggerToggleDot = Instance.new("Frame")
-triggerToggleDot.Size = UDim2.new(0, 20, 0, 20)
-triggerToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+triggerToggleDot.Size = UDim2.new(0, 16, 0, 16)
+triggerToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 triggerToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 triggerToggleDot.BorderSizePixel = 0
 triggerToggleDot.Parent = triggerToggleBg
@@ -1921,13 +2005,13 @@ triggerToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().Triggerbot = not getgenv().Triggerbot
         if getgenv().Triggerbot then
-            triggerToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            triggerToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            triggerToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            triggerToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Triggerbot", "✅ Enabled", 4)
             enableTriggerbot()
         else
             triggerToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            triggerToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            triggerToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Triggerbot", "❌ Disabled", 4)
             disableTriggerbot()
         end
@@ -1954,19 +2038,25 @@ espWallLabel.TextSize = 13
 espWallLabel.TextXAlignment = Enum.TextXAlignment.Left
 espWallLabel.Parent = espWallFrame
 
+local espWallGradient = Instance.new("UIGradient", espWallLabel)
+espWallGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(espWallFrame, "Only shows ESP on visible players.")
 
 local espWallToggleBg = Instance.new("Frame")
-espWallToggleBg.Size = UDim2.new(0, 44, 0, 24)
-espWallToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+espWallToggleBg.Size = UDim2.new(0, 38, 0, 20)
+espWallToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 espWallToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 espWallToggleBg.BorderSizePixel = 0
 espWallToggleBg.Parent = espWallFrame
 Instance.new("UICorner", espWallToggleBg).CornerRadius = UDim.new(1, 0)
 
 local espWallToggleDot = Instance.new("Frame")
-espWallToggleDot.Size = UDim2.new(0, 20, 0, 20)
-espWallToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+espWallToggleDot.Size = UDim2.new(0, 16, 0, 16)
+espWallToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 espWallToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 espWallToggleDot.BorderSizePixel = 0
 espWallToggleDot.Parent = espWallToggleBg
@@ -1976,12 +2066,12 @@ espWallToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().ESPWallCheck = not getgenv().ESPWallCheck
         if getgenv().ESPWallCheck then
-            espWallToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            espWallToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            espWallToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            espWallToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("ESP Wall Check", "✅ Enabled", 4)
         else
             espWallToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            espWallToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            espWallToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("ESP Wall Check", "❌ Disabled", 4)
         end
         updateStatusBar()
@@ -2006,6 +2096,12 @@ aimSpeedLabel.Font = Enum.Font.Gotham
 aimSpeedLabel.TextSize = 10
 aimSpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
 aimSpeedLabel.Parent = aimSpeedFrame
+
+local aimSpeedGradient = Instance.new("UIGradient", aimSpeedLabel)
+aimSpeedGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
 
 local aimSpeedHelpBtn = Instance.new("TextButton")
 aimSpeedHelpBtn.Size = UDim2.new(0, 16, 0, 16)
@@ -2093,6 +2189,12 @@ fovLabel.Font = Enum.Font.Gotham
 fovLabel.TextSize = 10
 fovLabel.TextXAlignment = Enum.TextXAlignment.Left
 fovLabel.Parent = fovFrame
+
+local fovGradient = Instance.new("UIGradient", fovLabel)
+fovGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
 
 local fovHelpBtn = Instance.new("TextButton")
 fovHelpBtn.Size = UDim2.new(0, 16, 0, 16)
@@ -2183,19 +2285,25 @@ antiAFKLabel.TextSize = 13
 antiAFKLabel.TextXAlignment = Enum.TextXAlignment.Left
 antiAFKLabel.Parent = antiAFKFrame
 
-createHelpButton(antiAFKFrame, "Prevents Roblox from kicking you for being idle. Select time limit or set to forever.")
+local antiAFKGradient = Instance.new("UIGradient", antiAFKLabel)
+antiAFKGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
+createHelpButton(antiAFKFrame, "Prevents Roblox from kicking you for being idle.")
 
 local antiAFKToggleBg = Instance.new("Frame")
-antiAFKToggleBg.Size = UDim2.new(0, 44, 0, 24)
-antiAFKToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+antiAFKToggleBg.Size = UDim2.new(0, 38, 0, 20)
+antiAFKToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 antiAFKToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 antiAFKToggleBg.BorderSizePixel = 0
 antiAFKToggleBg.Parent = antiAFKFrame
 Instance.new("UICorner", antiAFKToggleBg).CornerRadius = UDim.new(1, 0)
 
 local antiAFKToggleDot = Instance.new("Frame")
-antiAFKToggleDot.Size = UDim2.new(0, 20, 0, 20)
-antiAFKToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+antiAFKToggleDot.Size = UDim2.new(0, 16, 0, 16)
+antiAFKToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 antiAFKToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 antiAFKToggleDot.BorderSizePixel = 0
 antiAFKToggleDot.Parent = antiAFKToggleBg
@@ -2205,12 +2313,12 @@ antiAFKToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().AntiAFK = not getgenv().AntiAFK
         if getgenv().AntiAFK then
-            antiAFKToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            antiAFKToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            antiAFKToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            antiAFKToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Anti AFK", "✅ Anti AFK enabled", 4)
         else
             antiAFKToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            antiAFKToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            antiAFKToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Anti AFK", "❌ Anti AFK disabled", 4)
         end
         updateStatusBar()
@@ -2237,19 +2345,25 @@ flyLabel.TextSize = 13
 flyLabel.TextXAlignment = Enum.TextXAlignment.Left
 flyLabel.Parent = flyFrame
 
+local flyGradient = Instance.new("UIGradient", flyLabel)
+flyGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(flyFrame, "WASD to move, Space up, Shift down.")
 
 local flyToggleBg = Instance.new("Frame")
-flyToggleBg.Size = UDim2.new(0, 44, 0, 24)
-flyToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+flyToggleBg.Size = UDim2.new(0, 38, 0, 20)
+flyToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 flyToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 flyToggleBg.BorderSizePixel = 0
 flyToggleBg.Parent = flyFrame
 Instance.new("UICorner", flyToggleBg).CornerRadius = UDim.new(1, 0)
 
 local flyToggleDot = Instance.new("Frame")
-flyToggleDot.Size = UDim2.new(0, 20, 0, 20)
-flyToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+flyToggleDot.Size = UDim2.new(0, 16, 0, 16)
+flyToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 flyToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 flyToggleDot.BorderSizePixel = 0
 flyToggleDot.Parent = flyToggleBg
@@ -2259,13 +2373,13 @@ flyToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().Fly = not getgenv().Fly
         if getgenv().Fly then
-            flyToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            flyToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            flyToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            flyToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Fly", "✅ Enabled", 4)
             enableFly()
         else
             flyToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            flyToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            flyToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Fly", "❌ Disabled", 4)
             disableFly()
         end
@@ -2293,19 +2407,25 @@ noclipLabel.TextSize = 13
 noclipLabel.TextXAlignment = Enum.TextXAlignment.Left
 noclipLabel.Parent = noclipFrame
 
+local noclipGradient = Instance.new("UIGradient", noclipLabel)
+noclipGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(noclipFrame, "Walk through walls.")
 
 local noclipToggleBg = Instance.new("Frame")
-noclipToggleBg.Size = UDim2.new(0, 44, 0, 24)
-noclipToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+noclipToggleBg.Size = UDim2.new(0, 38, 0, 20)
+noclipToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 noclipToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 noclipToggleBg.BorderSizePixel = 0
 noclipToggleBg.Parent = noclipFrame
 Instance.new("UICorner", noclipToggleBg).CornerRadius = UDim.new(1, 0)
 
 local noclipToggleDot = Instance.new("Frame")
-noclipToggleDot.Size = UDim2.new(0, 20, 0, 20)
-noclipToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+noclipToggleDot.Size = UDim2.new(0, 16, 0, 16)
+noclipToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 noclipToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 noclipToggleDot.BorderSizePixel = 0
 noclipToggleDot.Parent = noclipToggleBg
@@ -2315,13 +2435,13 @@ noclipToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().Noclip = not getgenv().Noclip
         if getgenv().Noclip then
-            noclipToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            noclipToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            noclipToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            noclipToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Noclip", "✅ Enabled", 4)
             enableNoclip()
         else
             noclipToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            noclipToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            noclipToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Noclip", "❌ Disabled", 4)
             disableNoclip()
         end
@@ -2349,19 +2469,25 @@ speedLabel.TextSize = 13
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 speedLabel.Parent = speedFrame
 
+local speedGradient = Instance.new("UIGradient", speedLabel)
+speedGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(speedFrame, "x" .. getgenv().SpeedMultiplier .. " walk speed.")
 
 local speedToggleBg = Instance.new("Frame")
-speedToggleBg.Size = UDim2.new(0, 44, 0, 24)
-speedToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+speedToggleBg.Size = UDim2.new(0, 38, 0, 20)
+speedToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 speedToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 speedToggleBg.BorderSizePixel = 0
 speedToggleBg.Parent = speedFrame
 Instance.new("UICorner", speedToggleBg).CornerRadius = UDim.new(1, 0)
 
 local speedToggleDot = Instance.new("Frame")
-speedToggleDot.Size = UDim2.new(0, 20, 0, 20)
-speedToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+speedToggleDot.Size = UDim2.new(0, 16, 0, 16)
+speedToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 speedToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 speedToggleDot.BorderSizePixel = 0
 speedToggleDot.Parent = speedToggleBg
@@ -2371,12 +2497,12 @@ speedToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().SpeedBoost = not getgenv().SpeedBoost
         if getgenv().SpeedBoost then
-            speedToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            speedToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            speedToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            speedToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Speed Boost", "✅ Enabled", 4)
         else
             speedToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            speedToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            speedToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Speed Boost", "❌ Disabled", 4)
             local hum = getHum()
             if hum then hum.WalkSpeed = defaultWalkSpeed end
@@ -2405,19 +2531,25 @@ jumpLabel.TextSize = 13
 jumpLabel.TextXAlignment = Enum.TextXAlignment.Left
 jumpLabel.Parent = jumpFrame
 
+local jumpGradient = Instance.new("UIGradient", jumpLabel)
+jumpGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(jumpFrame, "Jump infinitely in the air.")
 
 local jumpToggleBg = Instance.new("Frame")
-jumpToggleBg.Size = UDim2.new(0, 44, 0, 24)
-jumpToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+jumpToggleBg.Size = UDim2.new(0, 38, 0, 20)
+jumpToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 jumpToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 jumpToggleBg.BorderSizePixel = 0
 jumpToggleBg.Parent = jumpFrame
 Instance.new("UICorner", jumpToggleBg).CornerRadius = UDim.new(1, 0)
 
 local jumpToggleDot = Instance.new("Frame")
-jumpToggleDot.Size = UDim2.new(0, 20, 0, 20)
-jumpToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+jumpToggleDot.Size = UDim2.new(0, 16, 0, 16)
+jumpToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 jumpToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 jumpToggleDot.BorderSizePixel = 0
 jumpToggleDot.Parent = jumpToggleBg
@@ -2427,12 +2559,12 @@ jumpToggleBg.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         getgenv().InfiniteJump = not getgenv().InfiniteJump
         if getgenv().InfiniteJump then
-            jumpToggleBg.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-            jumpToggleDot:TweenPosition(UDim2.new(1, -22, 0.5, -10), "Out", "Quad", 0.2, true)
+            jumpToggleBg.BackgroundColor3 = Color3.fromRGB(50, 200, 80)
+            jumpToggleDot:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Infinite Jump", "✅ Enabled", 4)
         else
             jumpToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            jumpToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -10), "Out", "Quad", 0.2, true)
+            jumpToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
             createNotification("Infinite Jump", "❌ Disabled", 4)
         end
         updateStatusBar()
@@ -2458,19 +2590,25 @@ saveLabel.TextSize = 13
 saveLabel.TextXAlignment = Enum.TextXAlignment.Left
 saveLabel.Parent = saveFrame
 
+local saveGradient = Instance.new("UIGradient", saveLabel)
+saveGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+
 createHelpButton(saveFrame, "Saves your settings to a file. When you reload the script, settings will be restored automatically.")
 
 local saveToggleBg = Instance.new("Frame")
-saveToggleBg.Size = UDim2.new(0, 44, 0, 24)
-saveToggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+saveToggleBg.Size = UDim2.new(0, 38, 0, 20)
+saveToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
 saveToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 saveToggleBg.BorderSizePixel = 0
 saveToggleBg.Parent = saveFrame
 Instance.new("UICorner", saveToggleBg).CornerRadius = UDim.new(1, 0)
 
 local saveToggleDot = Instance.new("Frame")
-saveToggleDot.Size = UDim2.new(0, 20, 0, 20)
-saveToggleDot.Position = UDim2.new(0, 2, 0.5, -10)
+saveToggleDot.Size = UDim2.new(0, 16, 0, 16)
+saveToggleDot.Position = UDim2.new(0, 2, 0.5, -8)
 saveToggleDot.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 saveToggleDot.BorderSizePixel = 0
 saveToggleDot.Parent = saveToggleBg
