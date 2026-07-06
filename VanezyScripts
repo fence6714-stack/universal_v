@@ -5,6 +5,7 @@ local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
+local Mouse = Player:GetMouse()
 
 getgenv().ESPPlayers = false
 getgenv().ESPTeammates = false
