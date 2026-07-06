@@ -571,25 +571,25 @@ Instance.new("UICorner", StatusToggleDot).CornerRadius = UDim.new(1, 0)
 
 local leftArrow = Instance.new("TextButton")
 leftArrow.Size = UDim2.new(0, 14, 0, 14)
-leftArrow.Position = UDim2.new(0, 4, 0.5, -7)
+leftArrow.Position = UDim2.new(1, -116, 0.5, -7)
 leftArrow.BackgroundTransparency = 1
 leftArrow.Text = "◀"
 leftArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
 leftArrow.Font = Enum.Font.GothamBold
 leftArrow.TextSize = 10
 leftArrow.Visible = false
-leftArrow.Parent = StatusBar
+leftArrow.Parent = Header
 
 local rightArrow = Instance.new("TextButton")
 rightArrow.Size = UDim2.new(0, 14, 0, 14)
-rightArrow.Position = UDim2.new(0, 157, 0.5, -7)
+rightArrow.Position = UDim2.new(1, 48, 0.5, -7)
 rightArrow.BackgroundTransparency = 1
 rightArrow.Text = "▶"
 rightArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
 rightArrow.Font = Enum.Font.GothamBold
 rightArrow.TextSize = 10
 rightArrow.Visible = false
-rightArrow.Parent = StatusBar
+rightArrow.Parent = Header
 
 local MinLeftArrow = Instance.new("TextButton")
 MinLeftArrow.Size = UDim2.new(0, 24, 0, 24)
