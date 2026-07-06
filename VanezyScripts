@@ -659,11 +659,12 @@ local function updateStatusBar()
             StatusToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -7), "Out", "Quad", 0.2, true)
         end
     else
-    MinLeftArrow.Visible = false
-    MinRightArrow.Visible = false
-    StatusToggleBg.Visible = false
-    leftArrow.Visible = false
-    rightArrow.Visible = false
+        MinLeftArrow.Visible = false
+        MinRightArrow.Visible = false
+        StatusToggleBg.Visible = false
+        leftArrow.Visible = false
+        rightArrow.Visible = false
+    end
 end
 
 leftArrow.MouseButton1Click:Connect(function()
