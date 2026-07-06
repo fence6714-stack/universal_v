@@ -439,11 +439,17 @@ end
 local renderConnection
 renderConnection = RunService.RenderStepped:Connect(function()
     cache.frameSkip = cache.frameSkip + 1
-    if cache.frameSkip % 2 == 0 then return end
+    if cache.frameSkip % 2 == 0 then
+    cache.frameSkip = cache.frameSkip + 1
+    return
+end
     
     if not getgenv().ESPPlayers and not getgenv().Aimbot and not getgenv().Tracers and not getgenv().Fly and not getgenv().Noclip then
         return
     end
+renderConnection = RunService.RenderStepped:Connect(function()
+    cache.frameSkip = cache.frameSkip + 1
+    if cache.frameSkip % 2 == 0 then return end
     
     updateCache()
     local mid = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
