@@ -711,6 +711,7 @@ local function updateStatusBar()
     if getgenv().Aimbot then table.insert(activeFuncs, {name = "Aim", key = "Aimbot"}) end
     if getgenv().Tracers then table.insert(activeFuncs, {name = "Trace", key = "Tracers"}) end
     if getgenv().AntiAFK then table.insert(activeFuncs, {name = "AFK", key = "AntiAFK"}) end
+    if getgenv().AutoShoot then table.insert(activeFuncs, {name = "Shoot", key = "AutoShoot"}) end
     
     if #activeFuncs == 0 then
         StatusText.Text = "No functions active"
