@@ -413,9 +413,6 @@ Instance.new("UICorner", backgroundEffect).CornerRadius = UDim.new(0, 14)
 local smokeGradient = Instance.new("UIGradient", backgroundEffect)
 smokeGradient.Rotation = 45
 
-local smokeGradient = Instance.new("UIGradient", backgroundEffect)
-smokeGradient.Rotation = 45
-
 local bgHue = 0
 task.spawn(function()
     while backgroundEffect and backgroundEffect.Parent do
@@ -571,7 +568,7 @@ Instance.new("UICorner", StatusToggleDot).CornerRadius = UDim.new(1, 0)
 
 local leftArrow = Instance.new("TextButton")
 leftArrow.Size = UDim2.new(0, 14, 0, 14)
-leftArrow.Position = UDim2.new(1, -116, 0.5, -7)
+leftArrow.Position = UDim2.new(0, 4, 0.5, -7)
 leftArrow.BackgroundTransparency = 1
 leftArrow.Text = "◀"
 leftArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
@@ -582,7 +579,7 @@ leftArrow.Parent = Header
 
 local rightArrow = Instance.new("TextButton")
 rightArrow.Size = UDim2.new(0, 14, 0, 14)
-rightArrow.Position = UDim2.new(1, 48, 0.5, -7)
+rightArrow.Position = UDim2.new(0, 157, 0.5, -7)
 rightArrow.BackgroundTransparency = 1
 rightArrow.Text = "▶"
 rightArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
@@ -662,16 +659,11 @@ local function updateStatusBar()
             StatusToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -7), "Out", "Quad", 0.2, true)
         end
     else
-        MinLeftArrow.Visible = false
-        MinRightArrow.Visible = false
-        StatusToggleBg.Visible = false
-        leftArrow.Visible = (#activeFuncs > 1)
-        rightArrow.Visible = (#activeFuncs > 1)
-        if #activeFuncs > 1 then
-            leftArrow.TextColor3 = (currentIndex > 1) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-            rightArrow.TextColor3 = (currentIndex < #activeFuncs) and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(80, 80, 80)
-        end
-    end
+    MinLeftArrow.Visible = false
+    MinRightArrow.Visible = false
+    StatusToggleBg.Visible = false
+    leftArrow.Visible = false
+    rightArrow.Visible = false
 end
 
 leftArrow.MouseButton1Click:Connect(function()
