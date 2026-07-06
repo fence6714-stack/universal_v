@@ -3,7 +3,7 @@ local Player = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
+local local = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
 local Mouse = Player:GetMouse()
 
@@ -1105,7 +1105,7 @@ local function updateStatusBar()
     if getgenv().Triggerbot then table.insert(activeFuncs, {name = "Trigger", key = "Triggerbot"}) end
     if getgenv().ESPWallCheck then table.insert(activeFuncs, {name = "WallCheck", key = "ESPWallCheck"}) end
     if getgenv().GodMode then table.insert(activeFuncs, {name = "God", key = "GodMode"}) end
-if getgenv().FullBright then table.insert(activeFuncs, {name = "Bright", key = "FullBright"}) end
+    if getgenv().FullBright then table.insert(activeFuncs, {name = "Bright", key = "FullBright"}) end
     
     if #activeFuncs == 0 then
         StatusText.Text = "No functions active"
