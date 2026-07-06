@@ -607,6 +607,7 @@ local function removeNotification(nf, customButtons)
     for i, n in ipairs(activeNotifications) do
         local ny = 5 + ((i - 1) * (customButtons and 100 or 72))
         pcall(function()
+            -- Определяем тип уведомления по его свойствам
             local isConfirm = customButtons
             local isFirst = (n.Title == "Notification" and n.Message:find("Vanezy Scripts"))
             local tx, toff = 0.5, -135
