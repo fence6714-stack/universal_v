@@ -1755,7 +1755,7 @@ MinBtn.MouseButton1Click:Connect(function()
         ContentPanel.Visible = false
         CollapseBtn.Visible = false
         StatusBar:TweenSize(UDim2.new(0, 175, 0, 26), "Out", "Quad", 0.25, true)
-        StatusBar.Position = UDim2.new(0.5, -87, 0.5, -13)
+        StatusBar.Position = UDim2.new(0, 45, 0.5, -13)
         StatusBar.BackgroundTransparency = 0
         MinLeftArrow.Visible = true
         MinRightArrow.Visible = true
