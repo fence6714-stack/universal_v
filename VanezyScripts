@@ -3,7 +3,7 @@ local Player = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local local = game:GetService("TweenService")
+local TweenService = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
 local Mouse = Player:GetMouse()
 
