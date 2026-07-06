@@ -405,7 +405,7 @@ Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 local backgroundEffect = Instance.new("Frame")
 backgroundEffect.Size = UDim2.new(1, 0, 1, 0)
 backgroundEffect.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-backgroundEffect.BackgroundTransparency = 0.5
+backgroundEffect.BackgroundTrelserency = 0.5
 backgroundEffect.BorderSizePixel = 0
 backgroundEffect.Parent = MainFrame
 Instance.new("UICorner", backgroundEffect).CornerRadius = UDim.new(0, 14)
@@ -658,7 +658,7 @@ local function updateStatusBar()
             StatusToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             StatusToggleDot:TweenPosition(UDim2.new(0, 2, 0.5, -7), "Out", "Quad", 0.2, true)
         end
-        else
+    else        
         MinLeftArrow.Visible = false
         MinRightArrow.Visible = false
         StatusToggleBg.Visible = false
@@ -671,8 +671,7 @@ leftArrow.MouseButton1Click:Connect(function()
     local activeFuncs = {}
     if getgenv().ESPPlayers then table.insert(activeFuncs, "ESP") end
     if getgenv().ESPTeammates then table.insert(activeFuncs, "ESP Team") end
-    if getgenv().Aimbot then table.insert(activeFuncs, "Aim") end
-    if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
+    if getgenv().Aimbot then table.insert(activeFuncs, "Aim") eend    if getgenv().Tracers then table.insert(activeFuncs, "Trace") end
     if getgenv().AntiAFK then table.insert(activeFuncs, "AFK") end
     if #activeFuncs <= 1 then return end
     local idx = StatusBar:GetAttribute("CurrentIndex") or 1
