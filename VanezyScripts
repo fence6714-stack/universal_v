@@ -593,25 +593,25 @@ rightArrow.Parent = StatusBar
 
 local MinLeftArrow = Instance.new("TextButton")
 MinLeftArrow.Size = UDim2.new(0, 24, 0, 24)
-MinLeftArrow.Position = UDim2.new(0.5, -130, 0.5, -12)
+MinLeftArrow.Position = UDim2.new(0.5, -112, 0.5, -12)
 MinLeftArrow.BackgroundTransparency = 1
 MinLeftArrow.Text = "◀"
 MinLeftArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
 MinLeftArrow.Font = Enum.Font.GothamBold
 MinLeftArrow.TextSize = 14
 MinLeftArrow.Visible = false
-MinLeftArrow.Parent = MainFrame
+MinLeftArrow.Parent = Header
 
 local MinRightArrow = Instance.new("TextButton")
 MinRightArrow.Size = UDim2.new(0, 24, 0, 24)
-MinRightArrow.Position = UDim2.new(0.5, 106, 0.5, -12)
+MinRightArrow.Position = UDim2.new(0.5, 88, 0.5, -12)
 MinRightArrow.BackgroundTransparency = 1
 MinRightArrow.Text = "▶"
 MinRightArrow.TextColor3 = Color3.fromRGB(100, 100, 100)
 MinRightArrow.Font = Enum.Font.GothamBold
 MinRightArrow.TextSize = 14
 MinRightArrow.Visible = false
-MinRightArrow.Parent = MainFrame
+MinRightArrow.Parent = Header
 
 local function updateStatusBar()
     local activeFuncs = {}
